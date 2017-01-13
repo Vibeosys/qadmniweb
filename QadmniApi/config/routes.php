@@ -57,6 +57,7 @@ Router::scope('/', function (RouteBuilder $routes) {
     $routes->connect('/pages/*', ['controller' => 'Pages', 'action' => 'display']);
     $routes->connect('itemlist', ['controller' => 'ItemMaster', 'action' => 'getList']);
     $routes->connect('categorylist', ['controller' => 'ItemCategory', 'action' => 'getList']);
+    $routes->connect('vendorsignup', ['controller' => 'Producer', 'action' => 'signUp']);
     /**
      * Connect catchall routes for all controllers.
      *

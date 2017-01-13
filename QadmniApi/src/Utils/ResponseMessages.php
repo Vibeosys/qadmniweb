@@ -27,7 +27,7 @@ class ResponseMessages {
         $baseResponse = new \App\Dto\BaseResponseDto();
         $baseResponse->errorCode = 0;
         $baseResponse->message = self::$successDictionary[$successCode];
-        $baseResponse->data =  $data;
+        $baseResponse->data = $data;
         return json_encode($baseResponse);
     }
 
@@ -35,11 +35,11 @@ class ResponseMessages {
         $baseResponse = new \App\Dto\BaseResponseDto();
         $baseResponse->errorCode = 0;
         $baseResponse->message = self::$successDictionary[$successCode];
-        $baseResponse->data = json_encode($data, JSON_UNESCAPED_UNICODE);
+        $baseResponse->data = $data != null ? json_encode($data, JSON_UNESCAPED_UNICODE) : "";
         return json_encode($baseResponse);
     }
 
-        /**
+    /**
      * Usage: App_Updater_String_Util::utf8_encode( $data );
      *
      * @param mixed $d
@@ -64,11 +64,13 @@ class ResponseMessages {
 
     protected static $errorDictionary = [
         101 => "No categories found",
-        102 => "No items found for the provided category"
+        102 => "No items found for the provided category",
+        103 => "Merchant registration failed, please try again later"
     ];
     protected static $successDictionary = [
         201 => "List of categories",
-        202 => "List of items"
+        202 => "List of items",
+        203 => "Merchant registered successfully"
     ];
 
 }

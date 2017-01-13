@@ -20,7 +20,7 @@ abstract class JsonDeserializer {
         $className = get_called_class();
         $classInstance = new $className();
         if (is_string($json)) {
-            $json = json_decode($json);
+            $json = json_decode($json, false, 512, JSON_UNESCAPED_UNICODE);
         }
         foreach ($json as $key => $value) {
             if (!property_exists($classInstance, $key)) {
