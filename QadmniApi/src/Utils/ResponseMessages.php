@@ -39,38 +39,26 @@ class ResponseMessages {
         return json_encode($baseResponse);
     }
 
-    /**
-     * Usage: App_Updater_String_Util::utf8_encode( $data );
-     *
-     * @param mixed $d
-     * @return mixed
-     * @see http://stackoverflow.com/questions/19361282/why-would-json-encode-returns-an-empty-string
-     */
-    public static function utf8_encode($d) {
-        if (is_array($d)) {
-            foreach ($d as $k => $v) {
-                $d[$k] = self::utf8_encode($v);
-            }
-        } elseif (is_object($d)) {
-            foreach ($d as $k => $v) {
-                $d->$k = self::utf8_encode($v);
-            }
-        } elseif (is_scalar($d)) {
-            $d = \utf8_encode($d);
-        }
-
-        return $d;
-    }
-
     protected static $errorDictionary = [
         101 => "No categories found",
         102 => "No items found for the provided category",
-        103 => "Merchant registration failed, please try again later"
+        103 => "Merchant registration failed, please try again later",
+        104 => "Sorry, authentication failed, please try again",
+        105 => "Sorry, You are not authorised for this operation, please login again",
+        106 => "You haven't added any products yet, Go ahead add new products",
+        107 => "Sorry, registration failed, please try again",
+        108 => "This email already exists, try using another one or use forgot password",
+        109 => "Sorry, login was not successful, please try again"
     ];
+    
     protected static $successDictionary = [
         201 => "List of categories",
         202 => "List of items",
-        203 => "Merchant registered successfully"
+        203 => "Merchant registered successfully",
+        204 => "Merchant logged in successfully",
+        205 => "List of items for a provided Merchant id",
+        206 => "You have registered successfully",
+        207 => "You have logged in successfully"
     ];
 
 }

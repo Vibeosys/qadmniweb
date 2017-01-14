@@ -180,4 +180,52 @@ class ItemMasterTable extends Table {
         return$producerLocation;
     }
 
+    /**
+     * Produces list of items for requested producer it
+     * @param string $languageCode
+     * @param int $producerId
+     * @return \App\Dto\Responses\ProducerItemListResponseDto[]
+     */
+    public function getVendorItemList($languageCode, $producerId) {
+        $vendorItemList = NULL;
+
+        $this->belongsTo('item_category', [
+            'foreignKey' => 'CategoryId',
+            'joinType' => 'INNER'
+        ]);
+
+        $itemName = 'ItemName_' . $languageCode;
+        $itemDesc = 'ItemDesc_' . $languageCode;
+        $categoryName = 'CategoryName_' . $languageCode;
+
+        $result = $this->find()
+                ->contain(['item_category'])
+                ->where(['ProducerId' => $producerId])
+                ->select(['ItemId',
+                    $itemName,
+                    $itemDesc,
+                    'UnitPrice',
+                    'ImageUrl',
+                    'ItemMaster.IsActive',
+                    'item_category.' . $categoryName])
+                ->all();
+
+        $resultArray = $result->toArray();
+        $recordCounter = 0;
+
+        foreach ($resultArray as $itemRecord) {
+            $vendorItem = new \App\Dto\Responses\ProducerItemListResponseDto();
+            $vendorItem->itemId = $itemRecord->ItemId;
+            $vendorItem->itemName = $itemRecord->$itemName;
+            $vendorItem->itemDesc = $itemRecord->$itemDesc;
+            $vendorItem->price = $itemRecord->UnitPrice;
+            $vendorItem->category = $itemRecord->item_category->$categoryName;
+            $vendorItem->availableForSell = $itemRecord->IsActive;
+            $vendorItem->imageUrl = $itemRecord->ImageUrl;
+            $vendorItemList[$recordCounter++] = $vendorItem;
+        }
+
+        return $vendorItemList;
+    }
+
 }

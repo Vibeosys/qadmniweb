@@ -34,7 +34,8 @@ class AppController extends Controller {
     protected $postedData;
     protected $postedUserInfo;
     protected $languageCode;
-    
+    protected $postedProducerData;
+
     protected function apiInitialize() {
         $this->autoRender = FALSE;
         $this->postedJson = $this->request->input();
@@ -81,6 +82,18 @@ class AppController extends Controller {
         ) {
             $this->set('_serialize', true);
         }
+    }
+
+    /**
+     * Validates producer with posted user information
+     * @return boolean
+     */
+    public function validateProducer() {
+        $producerCredentials = \App\Dto\ProducerCredentialDetailsDto::Deserialize($this->postedUserInfo);
+        $this->postedProducerData = $producerCredentials;
+        $producerTable = new \App\Model\Table\ProducerTable();
+        $validated = $producerTable->validateProducer($producerCredentials);
+        return $validated;
     }
 
 }

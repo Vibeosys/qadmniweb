@@ -22,6 +22,22 @@ class ItemMasterController extends AppController {
         }
     }
 
+    public function getVendorItemList() {
+        $this->apiInitialize();
+        $isVendorValidated = $this->validateProducer();
+        if (!$isVendorValidated) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(105));
+            return;
+        }
+        //Gets the list of items for a vendor id
+        $itemList = $this->ItemMaster->getVendorItemList($this->languageCode, $this->postedProducerData->producerId);
+        if ($itemList) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(205, $itemList));
+        } else {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(106));
+        }
+    }
+
     /**
      * Index method
      *

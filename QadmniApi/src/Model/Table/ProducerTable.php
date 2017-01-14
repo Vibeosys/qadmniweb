@@ -34,6 +34,10 @@ class ProducerTable extends Table {
         $this->primaryKey('ProducerId');
     }
 
+    public function getTable() {
+        return \Cake\ORM\TableRegistry::get('producer');
+    }
+
     /**
      * Default validation rules.
      *
@@ -118,6 +122,73 @@ class ProducerTable extends Table {
         }
 
         return false;
+    }
+
+    /**
+     * Validates producer data against database
+     * @param \App\Dto\ProducerCredentialDetailsDto $producerData
+     */
+    public function validateProducer($producerData) {
+        $thisTable = $this->getTable();
+        $producerExists = $thisTable->exists(['ProducerId' => $producerData->producerId,
+            'Password' => $producerData->password]);
+
+        return $producerExists;
+    }
+
+    /**
+     * Gets producer login details, check details, if exists then updates push details in database
+     * @param int $producerId 
+     * @param string $pushId 
+     * @param string $pushDeviceOsType 
+     * @return boolean Update success
+     */
+    public function updateNotificationDetails($producerId, $pushId, $pushDeviceOsType) {
+        $dbProducer = $this->find()
+                ->where(['ProducerId' => $producerId])
+                ->select('ProducerId', 'ProducerPushId', 'ProducerOsVersionType')
+                ->first();
+
+        if ($dbProducer) {
+            $dbProducer->ProducerPushId = $pushId;
+            $dbProducer->ProducerOsVersionType = $pushDeviceOsType;
+            if ($this->save($dbProducer)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Check login and get required details of Producer
+     * @param \App\Dto\Requests\ProducerLoginRequestDto $producerLoginRequest
+     */
+    public function getDetails($producerLoginRequest){
+        $producerDetails = NULL;
+        $dbProducer = $this->find()
+                ->where(['EmailId' => $producerLoginRequest->emailId, 
+                    'Password' => $producerLoginRequest->password])
+                ->select(['ProducerId',
+                    'BusinessName_En', 
+                    'BusinessName_Ar', 
+                    'Address', 
+                    'Latitude', 
+                    'Longitude', 
+                    'Name'])
+                ->first();
+        
+        if($dbProducer){
+            $producerDetails= new \App\Dto\Responses\ProducerLoginResponseDto();
+            $producerDetails->producerId = $dbProducer->ProducerId;
+            $producerDetails->producerName = $dbProducer->Name;
+            $producerDetails->businessNameEn = $dbProducer->BusinessName_En;
+            $producerDetails->businessNameAr = $dbProducer->BusinessName_Ar;
+            $producerDetails->businessLat = $dbProducer->Latitude;
+            $producerDetails->businessLong = $dbProducer->Longitude;
+            $producerDetails->businessAddress = $dbProducer->Address;
+        }
+        
+        return $producerDetails;
     }
 
 }
