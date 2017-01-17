@@ -102,6 +102,33 @@ class ItemMasterTable extends Table {
     }
 
     /**
+     * Adds product into the items table
+     * @param \App\Dto\Requests\ProductAddRequestDto $productAddRequest
+     * @param int $producerId 
+     * @return int
+     */
+    public function addProduct($productAddRequest, $producerId) {
+        $generatedProductId = 0;
+
+        $dbProduct = $this->newEntity();
+        $dbProduct->CategoryId = $productAddRequest->categoryId;
+        $dbProduct->ItemName_En = $productAddRequest->itemNameEn;
+        $dbProduct->ItemName_Ar = $productAddRequest->itemNameAr;
+        $dbProduct->ItemDesc_En = $productAddRequest->itemDescEn;
+        $dbProduct->ItemDesc_Ar = $productAddRequest->itemDescAr;
+        $dbProduct->UnitPrice = $productAddRequest->price;
+        $dbProduct->OfferText = $productAddRequest->offerText;
+        $dbProduct->CreatedDate = new \Cake\I18n\Time();
+        $dbProduct->IsActive = 1;
+        $dbProduct->ProducerId = $producerId;
+
+        if ($this->save($dbProduct)) {
+            $generatedProductId = $dbProduct->ItemId;
+        }
+        return $generatedProductId;
+    }
+
+    /**
      * Gets list of items for a given language code
      * @param string $langCode
      * @param int $categoryId 
@@ -154,6 +181,7 @@ class ItemMasterTable extends Table {
             $itemListRecord->rating = $itemRecord->Rating;
             $itemListRecord->producerId = $itemRecord->producer->ProducerId;
             $itemListRecord->unitPrice = $itemRecord->UnitPrice;
+            $itemListRecord->reviews = $itemRecord->Reviews;
 
             if (!in_array($itemListRecord->producerId, $producerIdList)) {
                 $producerLocation = $this->buildProducerLocation($itemRecord, $businessName);
@@ -226,6 +254,22 @@ class ItemMasterTable extends Table {
         }
 
         return $vendorItemList;
+    }
+
+    public function addOrUpdateProductImage($productId, $imageUrl) {
+        $productImageAddedOrUpdated = false;
+        $dbProduct = $this->find()
+                ->where(['ItemId' => $productId])
+                ->select(['ItemId', 'ImageUrl'])
+                ->first();
+
+        if ($dbProduct) {
+            $dbProduct->ImageUrl = $imageUrl;
+            if ($this->save($dbProduct)) {
+                $productImageAddedOrUpdated = true;
+            }
+        }
+        return $productImageAddedOrUpdated;
     }
 
 }

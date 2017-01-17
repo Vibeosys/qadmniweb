@@ -6,24 +6,16 @@
  * and open the template in the editor.
  */
 
-namespace App\Dto;
+namespace App\Dto\Requests;
 
 /**
- * Description of ItemInfoDto
+ * Description of ProductImageRequestDto
  *
  * @author anand
  */
-class ItemInfoDto {
-
+class ProductImageRequestDto extends \App\Dto\JsonDeserializer {
     //put your code here
-    public $itemId;
-    public $itemDesc;
-    public $itemName;
-    public $unitPrice;
-    public $offerText;
-    public $rating;
-    public $imageUrl;
-    public $reviews;
+    public $productId;
     public $producerId;
-
+    public $password;
 }

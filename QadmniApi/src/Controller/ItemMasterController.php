@@ -38,6 +38,68 @@ class ItemMasterController extends AppController {
         }
     }
 
+    public function addProduct() {
+        $this->apiInitialize();
+        //Is valid producer
+        $isVendorValidated = $this->validateProducer();
+        if (!$isVendorValidated) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(105));
+            return;
+        }
+
+        $productAddRequest = \App\Dto\Requests\ProductAddRequestDto::Deserialize($this->postedData);
+        //Add a product and get product id
+        $resultProductId = $this->ItemMaster->addProduct($productAddRequest, $this->postedProducerData->producerId);
+
+        if ($resultProductId) {
+            $productAddResponse = new \App\Dto\Responses\ProductAddResponseDto();
+            $productAddResponse->productId = $resultProductId;
+            $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(208, $productAddResponse));
+        } else {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(110));
+        }
+    }
+
+    public function addUpdateProductImage() {
+        $this->apiInitialize();
+        $webrootDir = $this->getWebrootDir();
+        $uploadedData = $this->request->data;
+        $imageUrl = null;
+
+        $json = $this->request->data['json'];
+        $productImageRequest = \App\Dto\Requests\ProductImageRequestDto::Deserialize($json);
+
+        $producerCredentials = new \App\Dto\ProducerCredentialDetailsDto();
+        $producerCredentials->producerId = $productImageRequest->producerId;
+        $producerCredentials->password = $productImageRequest->password;
+
+        $isVendorValidated = $this->validateProducerData($producerCredentials);
+        if (!$isVendorValidated) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(105));
+            return;
+        }
+        
+        foreach ($uploadedData as $requestedData) {
+            if (!is_array($requestedData)) {
+                continue;
+            }
+
+            $file = $requestedData;
+            $imageUrl = \App\Utils\ImageFileUploader::uploadMultipartImage($webrootDir, $file);
+        }
+
+        $imageUpdated = $this->ItemMaster->addOrUpdateProductImage($productImageRequest->productId, $imageUrl);
+        if ($imageUpdated) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(209));
+        } else {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(111));
+        }
+    }
+
+    private function getWebrootDir() {
+        return "http://" . $this->request->host() . $this->request->webroot;
+    }
+
     /**
      * Index method
      *

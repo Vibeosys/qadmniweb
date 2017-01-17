@@ -6,18 +6,14 @@
  * and open the template in the editor.
  */
 
-namespace App\Utils;
+namespace App\Dto\Responses;
 
 /**
- * Description of QadmniConstants
+ * Description of ProductAddResponseDto
  *
  * @author anand
  */
-class QadmniConstants {
-
-    /**
-     * Image path directory Qadmni
-     */
-    const IMAGE_PATH_DIRECTORY = 'images';
-
+class ProductAddResponseDto {
+    //put your code here
+    public $productId;
 }

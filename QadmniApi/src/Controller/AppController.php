@@ -90,6 +90,16 @@ class AppController extends Controller {
      */
     public function validateProducer() {
         $producerCredentials = \App\Dto\ProducerCredentialDetailsDto::Deserialize($this->postedUserInfo);
+        $validated = $this->validateProducerData($producerCredentials);
+        return $validated;
+    }
+
+    /**
+     * Validates producer credentials
+     * @param \App\Dto\ProducerCredentialDetailsDto $producerCredentials
+     * @return boolean
+     */
+    public function validateProducerData($producerCredentials) {
         $this->postedProducerData = $producerCredentials;
         $producerTable = new \App\Model\Table\ProducerTable();
         $validated = $producerTable->validateProducer($producerCredentials);

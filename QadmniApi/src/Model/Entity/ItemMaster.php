@@ -19,6 +19,7 @@ use Cake\ORM\Entity;
  * @property int $VendorId
  * @property string $ImageUrl
  * @property int $IsActive
+ * @property int $ProducerId 
  * @property \Cake\I18n\Time $CreatedDate
  */
 class ItemMaster extends Entity

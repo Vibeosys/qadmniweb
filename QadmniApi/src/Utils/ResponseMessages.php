@@ -48,7 +48,9 @@ class ResponseMessages {
         106 => "You haven't added any products yet, Go ahead add new products",
         107 => "Sorry, registration failed, please try again",
         108 => "This email already exists, try using another one or use forgot password",
-        109 => "Sorry, login was not successful, please try again"
+        109 => "Sorry, login was not successful, please try again",
+        110 => "Product could not be added at this moment, please try again",
+        111 => "Image could not be uploaded, please try again later"
     ];
     
     protected static $successDictionary = [
@@ -58,7 +60,9 @@ class ResponseMessages {
         204 => "Merchant logged in successfully",
         205 => "List of items for a provided Merchant id",
         206 => "You have registered successfully",
-        207 => "You have logged in successfully"
+        207 => "You have logged in successfully",
+        208 => "Product added successfully",
+        209 => "Image for the product added or updated successfully"
     ];
 
 }
