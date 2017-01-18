@@ -50,7 +50,8 @@ class ResponseMessages {
         108 => "This email already exists, try using another one or use forgot password",
         109 => "Sorry, login was not successful, please try again",
         110 => "Product could not be added at this moment, please try again",
-        111 => "Image could not be uploaded, please try again later"
+        111 => "Image could not be uploaded, please try again later",
+        112 => "You are not authorized for this request, please login and try again"
     ];
     
     protected static $successDictionary = [
@@ -62,7 +63,8 @@ class ResponseMessages {
         206 => "You have registered successfully",
         207 => "You have logged in successfully",
         208 => "Product added successfully",
-        209 => "Image for the product added or updated successfully"
+        209 => "Image for the product added or updated successfully",
+        210 => "Order initiated successfully, please pay and confirm"
     ];
 
 }

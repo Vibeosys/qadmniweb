@@ -34,6 +34,10 @@ class ItemMasterTable extends Table {
         $this->primaryKey('ItemId');
     }
 
+    private function getTable(){
+        return \Cake\ORM\TableRegistry::get('item_master');
+    }
+
     /**
      * Default validation rules.
      *
@@ -137,11 +141,13 @@ class ItemMasterTable extends Table {
         $itemListResponse = null;
         $itemList = null;
 
+        //Create name of the dynamic variables based on language code
         $itemName = 'ItemName_' . $langCode;
         $itemDesc = 'ItemDesc_' . $langCode;
         $businessName = 'BusinessName_' . $langCode;
         $producerBusinessName = 'producer.BusinessName_' . $langCode;
 
+        //Join with tables
         $this->belongsTo('producer', [
             'foreignKey' => 'ProducerId',
             'joinType' => 'INNER'
@@ -170,6 +176,7 @@ class ItemMasterTable extends Table {
         $producerIdList = [];
         $producerCounter = 0;
 
+        //Iterate through records
         foreach ($resultArray as $itemRecord) {
             $itemListRecord = new \App\Dto\ItemInfoDto();
 
@@ -183,13 +190,17 @@ class ItemMasterTable extends Table {
             $itemListRecord->unitPrice = $itemRecord->UnitPrice;
             $itemListRecord->reviews = $itemRecord->Reviews;
 
+            //Create a unique list of producer id with locations
             if (!in_array($itemListRecord->producerId, $producerIdList)) {
                 $producerLocation = $this->buildProducerLocation($itemRecord, $businessName);
-                $producerLocations[$producerCounter++] = $producerLocation;
+                $producerIdList[$producerCounter] = $itemListRecord->producerId;
+                $producerLocations[$producerCounter] = $producerLocation;
+                $producerCounter++;
             }
 
             $itemList[$recordCounter++] = $itemListRecord;
         }
+        //If there are recors fetched by query then assign the lists
         if (count($resultArray) > 0) {
             $itemListResponse = new \App\Dto\Responses\ItemListResponseDto();
             $itemListResponse->itemInfoList = $itemList;
@@ -256,6 +267,12 @@ class ItemMasterTable extends Table {
         return $vendorItemList;
     }
 
+    /**
+     * Adds or updates product image
+     * @param int $productId
+     * @param string $imageUrl
+     * @return boolean
+     */
     public function addOrUpdateProductImage($productId, $imageUrl) {
         $productImageAddedOrUpdated = false;
         $dbProduct = $this->find()
@@ -270,6 +287,31 @@ class ItemMasterTable extends Table {
             }
         }
         return $productImageAddedOrUpdated;
+    }
+
+    /**
+     * Gets the list of items with price
+     * @param array $itemIdList
+     * @param string $langCode
+     * @return \App\Dto\OrderItemPriceDto
+     */
+    public function getItemDetails($itemIdList, $langCode) {
+        $itemDetails = null;
+        $itemName = 'ItemName_' . $langCode;
+        $itemResult = $this->getTable()->find()
+                ->where(['ItemId IN ' => $itemIdList])
+                ->select(['ItemId', $itemName, 'UnitPrice'])
+                ->all();
+        $itemResultList = $itemResult->toArray();
+        $recordCounter = 0;
+        foreach ($itemResultList as $itemRecord) {
+            $orderItem = new \App\Dto\OrderItemPriceDto();
+            $orderItem->itemId = $itemRecord->ItemId;
+            $orderItem->itemName = $itemRecord->$itemName;
+            $orderItem->unitPrice = $itemRecord->UnitPrice;
+            $itemDetails[$recordCounter++] = $orderItem;
+        }
+        return $itemDetails;
     }
 
 }

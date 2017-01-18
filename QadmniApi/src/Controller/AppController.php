@@ -35,6 +35,7 @@ class AppController extends Controller {
     protected $postedUserInfo;
     protected $languageCode;
     protected $postedProducerData;
+    protected $postedCustomerData;
 
     protected function apiInitialize() {
         $this->autoRender = FALSE;
@@ -88,7 +89,7 @@ class AppController extends Controller {
      * Validates producer with posted user information
      * @return boolean
      */
-    public function validateProducer() {
+    protected function validateProducer() {
         $producerCredentials = \App\Dto\ProducerCredentialDetailsDto::Deserialize($this->postedUserInfo);
         $validated = $this->validateProducerData($producerCredentials);
         return $validated;
@@ -99,11 +100,23 @@ class AppController extends Controller {
      * @param \App\Dto\ProducerCredentialDetailsDto $producerCredentials
      * @return boolean
      */
-    public function validateProducerData($producerCredentials) {
+    protected function validateProducerData($producerCredentials) {
         $this->postedProducerData = $producerCredentials;
         $producerTable = new \App\Model\Table\ProducerTable();
         $validated = $producerTable->validateProducer($producerCredentials);
         return $validated;
+    }
+    
+    /**
+     * Validates customer credentials
+     * @return boolean
+     */
+    protected function validateCustomer(){
+        $customerCredentials = \App\Dto\CustomerCredentialDetailsDto::Deserialize($this->postedUserInfo);
+        $this->postedCustomerData = $customerCredentials;
+        $customerTable = new \App\Model\Table\CustomerTable();
+        $isCustomerValidated = $customerTable->validateCustomerData($customerCredentials);
+        return $isCustomerValidated;
     }
 
 }

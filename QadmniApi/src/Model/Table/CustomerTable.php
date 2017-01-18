@@ -34,7 +34,11 @@ class CustomerTable extends Table {
         $this->primaryKey('CustomerId');
     }
 
-    /**
+    private function getTable(){
+        return \Cake\ORM\TableRegistry::get('customer');
+    }
+
+        /**
      * Default validation rules.
      *
      * @param \Cake\Validation\Validator $validator Validator instance.
@@ -148,4 +152,16 @@ class CustomerTable extends Table {
         return $updateSuccess;
     }
 
+    /**
+     * Validates customer data against database
+     * @param \App\Dto\CustomerCredentialDetailsDto $customerCredentials
+     * @return boolean true if exists
+     */
+    public function validateCustomerData($customerCredentials){
+        $customerExists = $this->getTable()->exists([
+            'CustomerId' => $customerCredentials->customerId,
+            'Password' => $customerCredentials->password]);
+        
+        return $customerExists;
+    }
 }
