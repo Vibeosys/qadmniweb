@@ -49,8 +49,7 @@ class OrderController extends AppController {
         $chargeMasterTable = new \App\Model\Table\ChargeMasterTable();
         $orderChargeList = $chargeMasterTable->getAllCharges();
         //Call provider engine to provide detail breakup of charges to be levied
-        $orderChargeDetails = \App\Utils\OrderChargeProvider::provideApplicableCharges($totalOrderAmount, 
-                $orderChargeList, $orderInitiationRequest->deliveryMethod, $orderInitiationRequest->paymentMethod);
+        $orderChargeDetails = \App\Utils\OrderChargeProvider::provideApplicableCharges($totalOrderAmount, $orderChargeList, $orderInitiationRequest->deliveryMethod, $orderInitiationRequest->paymentMethod);
 
         //Set delivery date time
         $deliveryDateTime = null;
@@ -61,7 +60,7 @@ class OrderController extends AppController {
         //Get latest Rate Of Exchange from database.
         $roeTable = new \App\Model\Table\RateOfExchangeTable();
         $roeRecord = $roeTable->getLastUpdatedROE();
-        
+
         //Build params and add to table entries
         $orderHdrParams = \App\Utils\OrderParamBuilder::BuildOrderHeaderParams($orderInitiationRequest, 
                 $orderChargeDetails, $deliveryDateTime, $this->postedCustomerData->customerId, 
@@ -69,17 +68,17 @@ class OrderController extends AppController {
         $orderHeaderTable = new \App\Model\Table\OrderHeaderTable();
         $orderId = $orderHeaderTable->addNewOrder($orderHdrParams);
         //If order id is not generated, then throw error to customer
-        if($orderId == 0){
+        if ($orderId == 0) {
             $this->response->body(\App\Utils\ResponseMessages::prepareError(114));
             return;
         }
-        
+
         $orderDtl = new \App\Model\Table\OrderDtlTable();
         $ordersAdded = $orderDtl->addNewOrders($orderId, $ItemPriceList);
-        
+
         $orderChargeTable = new \App\Model\Table\OrderChargesTable();
         $chargesAdded = $orderChargeTable->addOrderCharges($orderId, $orderChargeDetails->chargeDetailBreakup);
-        
+
         //Build final response object
         $initiateOrderResponse = new \App\Dto\Responses\InitiateOrderResponseDto();
         $initiateOrderResponse->chargeBreakup = $orderChargeDetails->chargeDetailBreakup;
@@ -89,6 +88,70 @@ class OrderController extends AppController {
         $initiateOrderResponse->totalAmountInUSD = $orderHdrParams->totalAmountInUSD;
 
         $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(210, $initiateOrderResponse));
+    }
+
+    public function processOrder() {
+        $this->apiInitialize();
+        //Validate customer first
+        $isCustomerValidated = $this->validateCustomer();
+        if (!$isCustomerValidated) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(112));
+            return;
+        }
+
+        $processOrderRequest = \App\Dto\Requests\ProcessOrderRequestDto::Deserialize($this->postedData);
+        $orderHdrTable = new \App\Model\Table\OrderHeaderTable();
+        //Get the order details from db and verify if those are correct.
+        $orderDetails = $orderHdrTable->getOrderDetails($processOrderRequest->orderId, $this->postedCustomerData->customerId);
+
+        if (!$orderDetails) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(114));
+            return;
+        }
+
+        //Validate if the values are matching
+        $orderAmtMatch = $orderDetails->orderAmountInSAR == $processOrderRequest->orderAmountInSAR;
+        $orderAmtUsdMatch = $orderDetails->orderAmountInUSD == $processOrderRequest->orderAmountInUSD;
+        $orderStatusMatch = $orderDetails->orderStatus == \App\Utils\QadmniConstants::ORDER_STATUS_INITIATED;
+        //If db values are matching with request values then go ahead else throw error
+        if ($orderAmtMatch && $orderAmtUsdMatch && $orderStatusMatch) {
+            //Update the order status to pending
+            $statusUpdated = $orderHdrTable->updateOrderStatus($processOrderRequest->orderId, 
+                    \App\Utils\QadmniConstants::ORDER_STATUS_PENDING);
+
+            if (!$statusUpdated) {
+                \Cake\Log\Log::error('Order status not updated for order ' . $processOrderRequest->orderId);
+            }
+
+            $paymentTable = new \App\Model\Table\PaymentsTable();
+            $transactionId = \App\Utils\QadmniUtils::generateTransactionId($this->postedCustomerData->customerId, 
+                    $orderDetails->orderId);
+            //Create new transaction
+            $transactionCreationSuccess = $paymentTable->addNewTransaction($transactionId, $orderDetails->orderId, 
+                    $orderDetails->orderAmountInUSD);
+
+            if (!$transactionCreationSuccess) {
+                \Cake\Log\Log::error('Transaction could not be created for trans id ' . $transactionId);
+            }
+
+            //build response object now
+            $processOrderResponse = new \App\Dto\Responses\ProcessOrderResponseDto();
+            $processOrderResponse->amount = $orderDetails->orderAmountInUSD;
+            $processOrderResponse->currency = \App\Utils\QadmniConstants::PAYMENT_CURRENCY;
+            $processOrderResponse->orderId = $orderDetails->orderId;
+            $processOrderResponse->transactionId = $transactionId;
+            $processOrderResponse->transactionRequired = $orderDetails->transactionRequired;
+
+            //If the transaction is required then go ahead and add paypal information
+            if ($orderDetails->transactionRequired) {
+                $paypalInfo = \App\Utils\QadmniUtils::buildPaypalInfo($orderDetails->orderAmountInUSD);
+                $processOrderResponse->paypalEnvValues = $paypalInfo;
+            }
+            
+            $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(211, $processOrderResponse));
+        } else {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(115));
+        }
     }
 
     /**

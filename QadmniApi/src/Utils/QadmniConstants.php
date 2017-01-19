@@ -61,7 +61,43 @@ class QadmniConstants {
      */
     const ORDER_STATUS_INITIATED = 0;
     /**
+     * Order status pending as PENDING 1
+     */
+    const ORDER_STATUS_PENDING = 1;
+    /**
      * Delivery status non initiated 0
      */
     const DELIVERY_STATUS_INITIATED = 0;
+    /**
+     * Payment currency is USD
+     */
+    const PAYMENT_CURRENCY = 'USD';
+    /**
+     * Payment status 0 is for Pending
+     */
+    const PAYMENT_STATUS_PENDING = 0;
+    /**
+     * Payment status 1 for Confirmed
+     */
+    const PAYMENT_STATUS_CONFIRMED = 1;
+    /**
+     * Paypal environment
+     */
+    const PAYPAL_ENV = 'sandbox';
+    /**
+     * Client id for sandbox
+     */
+    const PAYPAL_SANDBOX_CLIENT_ID = 'AazpbjT0kIEf-4PEdLZL7S9Y6F2BU5zLN9vOn9AGgkjLcLHj0bFwIrOxQK-7vXwmT-0Q9SmVGapM5hDS';
+    /**
+     * Secret for paypal sandbox
+     */
+    const PAYPAL_SANDBOX_SECRET = 'EKVaFVA51y2y2__FfrSNfdzR0yieyQ86wRp0u_1BYEWaTpivoLWjkfChXk6XAgJOpzR4YeLqam6_po9D';
+    /**
+     * Paypal live client id
+     */
+    const PAYPAL_LIVE_CLIENT_ID = 'ARUsUW_-mWCE1NAAdf0Xy4KtxxpTgv9KsM3XtEpG3DlW3C3t7J_Qikz1dA1DfUUN2c0UQUpKfGJaG23z';
+    /**
+     * Paypal live secret
+     */
+    const PAYPAL_LIVE_SECRET = 'ECAxCecKjAa1XUga2A4l7NvL9IYwm3dFUkAVtQ_SL_4gOzWcG4-z2uqHTmcyKMXA_Wbkk1ih5CgmBqzp';
 }

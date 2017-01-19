@@ -83,21 +83,52 @@ class QadmniUtils {
      * @param string $paymentMethodRequested
      * @return string
      */
-    public static function filterPaymentMethod($paymentMethodRequested){
-        if(in_array($paymentMethodRequested, static::$_paymentMethods)){
+    public static function filterPaymentMethod($paymentMethodRequested) {
+        if (in_array($paymentMethodRequested, static::$_paymentMethods)) {
             return $paymentMethodRequested;
         }
         return 'PP';
     }
-    
+
     /**
      * Converts from TimeStamp to DATE TIME
      * @param type $timeStamp
      * @return \Cake\I18n\Time
      */
-    public static function convertFromTimestampToDate($timeStamp){
-        $tm =  new \Cake\I18n\Time(); 
+    public static function convertFromTimestampToDate($timeStamp) {
+        $tm = new \Cake\I18n\Time();
         $tm->setTimestamp($timeStamp);
         return $tm;
     }
+
+    /**
+     * Generates transaction id required for Paypal
+     * @param int $customerId
+     * @param int $orderId
+     * @return string
+     */
+    public static function generateTransactionId($customerId, $orderId) {
+        $dt = new \Cake\I18n\Time();
+        $dtm = $dt->getTimestamp();
+        $transId = 'QDM-' . $customerId . '-' . $orderId . '-' . $dtm;
+        return $transId;
+    }
+
+    /**
+     * Builds paypal values to return to app
+     * @param type $amount
+     * @return \App\Dto\PaypalEnvValuesDto
+     */
+    public static function buildPaypalInfo($amount) {
+        $paypalInfo = new \App\Dto\PaypalEnvValuesDto();
+        $paypalInfo->environment = QadmniConstants::PAYPAL_ENV;
+        $paypalInfo->paypalDesc = 'Total Amount in US $ ' . $amount;
+        if (QadmniConstants::PAYPAL_ENV != 'live') {
+            $paypalInfo->clientId = QadmniConstants::PAYPAL_SANDBOX_CLIENT_ID;
+        } else {
+            $paypalInfo->clientId = QadmniConstants::PAYPAL_LIVE_CLIENT_ID;
+        }
+        return $paypalInfo;
+    }
+
 }

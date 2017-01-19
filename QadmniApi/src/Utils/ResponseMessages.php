@@ -53,7 +53,8 @@ class ResponseMessages {
         111 => "Image could not be uploaded, please try again later",
         112 => "You are not authorized for this request, please login and try again",
         113 => "Cart cannot products from different merchants",
-        114 => "Sorry, error occurred while processing your request, please try again"
+        114 => "Sorry, error occurred while processing your request, please try again",
+        115 => "Sorry, something went wrong, please try again with fresh order"
     ];
     
     protected static $successDictionary = [
@@ -66,7 +67,8 @@ class ResponseMessages {
         207 => "You have logged in successfully",
         208 => "Product added successfully",
         209 => "Image for the product added or updated successfully",
-        210 => "Order initiated successfully, please pay and confirm"
+        210 => "Order initiated successfully, please proceed to confirmation",
+        211 => "Order is processed successfully, please confirm to proceed further"
     ];
 
 }

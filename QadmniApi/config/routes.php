@@ -65,6 +65,7 @@ Router::scope('/', function (RouteBuilder $routes) {
     $routes->connect('addproduct', ['controller' => 'ItemMaster', 'action' => 'addProduct']);
     $routes->connect('addproductimage', ['controller' => 'ItemMaster', 'action' => 'addUpdateProductImage']);
     $routes->connect('initiateorder', ['controller' => 'Order', 'action' => 'initiateOrder']);
+    $routes->connect('processorder', ['controller' => 'Order', 'action' => 'processOrder']);
     /**
      * Connect catchall routes for all controllers.
      *

@@ -126,11 +126,56 @@ class OrderHeaderTable extends Table {
         $dbNewOrder->TotalAmount = $orderHdrParams->totalAmountInSAR;
         $dbNewOrder->DeliveryStatusId = $orderHdrParams->deliveryStatus;
         $dbNewOrder->TotalAmountInUSD = $orderHdrParams->totalAmountInUSD;
-        
+
         if ($dbTable->save($dbNewOrder)) {
             $orderId = $dbNewOrder->OrderId;
         }
         return $orderId;
     }
 
+    /**
+     * Gets order details of the order to be processed
+     * @param int $orderId
+     * @param int $customerId
+     * @return \App\Dto\OrderValidationDto 
+     */
+    public function getOrderDetails($orderId, $customerId) {
+        $orderDetails = null;
+        $dbOrder = $this->getTable()->find()
+                ->where(['OrderId' => $orderId, 'CustomerId' => $customerId])
+                ->select(['TotalAmount', 'TotalAmountInUSD', 'OrderId', 'TransactionRequired', 'Status'])
+                ->first();
+        if ($dbOrder) {
+            $orderDetails = new \App\Dto\OrderValidationDto();
+            $orderDetails->orderAmountInSAR = $dbOrder->TotalAmount;
+            $orderDetails->orderAmountInUSD = $dbOrder->TotalAmountInUSD;
+            $orderDetails->orderId = $dbOrder->OrderId;
+            $orderDetails->orderStatus = $dbOrder->Status;
+            $orderDetails->transactionRequired = $dbOrder->TransactionRequired == 1? true : false;
+        }   
+        return $orderDetails;
+    }
+    
+    /**
+     * Updates given status for the order
+     * @param int $orderId
+     * @param int $orderStatus
+     * @return boolean
+     */
+    public function updateOrderStatus($orderId, $orderStatus){
+        $statusUpdated = false;
+        $dbOrder = $this->getTable()->find()
+                ->where(['OrderId' => $orderId])
+                ->select(['OrderId', 'Status'])
+                ->first();
+        
+        if($dbOrder){
+            $dbOrder->Status = $orderStatus;
+            if($this->getTable()->save($dbOrder)){
+                $statusUpdated = true;
+            }
+        }
+        return $statusUpdated;
+    }
+            
 }
