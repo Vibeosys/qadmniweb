@@ -19,4 +19,5 @@ class OrderChargeDto {
     public $amount;
     public $percentage;
     public $chargeType;
+    public $chargeId;
 }

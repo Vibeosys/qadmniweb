@@ -85,6 +85,7 @@ class ChargeMasterTable extends Table {
         $resultArray = $result->toArray();
         foreach ($resultArray as $chargeRecord) {
             $orderChargeRecord = new \App\Dto\OrderChargeDto();
+            $orderChargeRecord->chargeId = $chargeRecord->ChargeId;
             $orderChargeRecord->chargeDetails = $chargeRecord->ChargeDetails;
             $orderChargeRecord->chargeType = $chargeRecord->ChargeType;
             $orderChargeRecord->percentage = $chargeRecord->Percentage;

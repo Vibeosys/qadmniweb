@@ -23,19 +23,24 @@ class OrderChargeProvider {
      * @param string $paymentMethod
      * @return \App\Dto\OrderApplicableChargesDto 
      */
-    public static function provideApplicableCharges($itemOrderAmount, $orderChargeList, $deliveryMethod, $paymentMethod) {
+    public static function provideApplicableCharges($itemOrderAmount, $orderChargeList, 
+            $deliveryMethod, $paymentMethod) {
         $orderApplicableCharges = new \App\Dto\OrderApplicableChargesDto();
 
+        //Filter charge types applicable for the payment n delivery
         $applicableChargeTypes = static::filterApplicableCharges($deliveryMethod, $paymentMethod);
         $chargeBreakupList = [];
         $totalSurchargeAmount = 0;
 
+        //Iterate through all the charge types and add only relevant charges
         foreach ($orderChargeList as $orderCharge) {
             if (in_array($orderCharge->chargeType, $applicableChargeTypes)) {
                 $calculatedAmount = static::calculateCharges($itemOrderAmount, $orderCharge->percentage, $orderCharge->amount);
                 $totalSurchargeAmount += $calculatedAmount;
 
+                //Create final breakup DTO
                 $chargeDetailBreakup = new \App\Dto\ChargeDetailBreakupDto();
+                $chargeDetailBreakup->chargeId = $orderCharge->chargeId;
                 $chargeDetailBreakup->chargeDetails = $orderCharge->chargeDetails;
                 $chargeDetailBreakup->amount = $calculatedAmount;
 
@@ -43,6 +48,7 @@ class OrderChargeProvider {
             }
         }
 
+        //Create response DTO with amount and breakup list
         $orderApplicableCharges->orderSubTotal = $itemOrderAmount;
         $orderApplicableCharges->orderTotalAmount = $itemOrderAmount + $totalSurchargeAmount;
         $orderApplicableCharges->chargeDetailBreakup = $chargeBreakupList;
@@ -50,6 +56,13 @@ class OrderChargeProvider {
         return $orderApplicableCharges;
     }
 
+    /**
+     * Calculates amount based on percentage and amount to be levied
+     * @param float $orderAmount
+     * @param float $percentage
+     * @param float $chargeAmount
+     * @return float
+     */
     private static function calculateCharges($orderAmount, $percentage, $chargeAmount) {
         $calculatedAmount = 0;
         if ($percentage > 0) {
@@ -60,6 +73,12 @@ class OrderChargeProvider {
         return $calculatedAmount;
     }
 
+    /**
+     * Filters applicable charge TYPES based on payment method and delivery method
+     * @param string $deliveryMethod
+     * @param string $paymentMethod
+     * @return array
+     */
     private static function filterApplicableCharges($deliveryMethod, $paymentMethod) {
         $applicableChargeTypes = [];
 

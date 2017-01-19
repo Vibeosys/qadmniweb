@@ -299,8 +299,8 @@ class ItemMasterTable extends Table {
         $itemDetails = null;
         $itemName = 'ItemName_' . $langCode;
         $itemResult = $this->getTable()->find()
-                ->where(['ItemId IN ' => $itemIdList])
-                ->select(['ItemId', $itemName, 'UnitPrice'])
+                ->where(['ItemId IN ' => $itemIdList, 'IsActive' => 1])
+                ->select(['ItemId', $itemName, 'UnitPrice', 'ProducerId'])
                 ->all();
         $itemResultList = $itemResult->toArray();
         $recordCounter = 0;
@@ -309,6 +309,7 @@ class ItemMasterTable extends Table {
             $orderItem->itemId = $itemRecord->ItemId;
             $orderItem->itemName = $itemRecord->$itemName;
             $orderItem->unitPrice = $itemRecord->UnitPrice;
+            $orderItem->producerId = $itemRecord->ProducerId;
             $itemDetails[$recordCounter++] = $orderItem;
         }
         return $itemDetails;

@@ -35,21 +35,58 @@ class OrderController extends AppController {
         $itemIdList = $this->prepareItemList($orderInitiationRequest->productInfo);
         //Fetch details of the items from db
         $ItemPriceList = $itemMasterTable->getItemDetails($itemIdList, $this->languageCode);
+        //Verify if all the items have same producer
+        $producerId = $this->verifyItemProducer($ItemPriceList);
+
+        //If producer is zero then throw an error
+        if ($producerId == 0) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(113));
+            return;
+        }
         //Prepare item with price and qty
         $totalOrderAmount = $this->prepareOrderItemList($ItemPriceList, $orderInitiationRequest->productInfo);
         //Get charges available
         $chargeMasterTable = new \App\Model\Table\ChargeMasterTable();
         $orderChargeList = $chargeMasterTable->getAllCharges();
         //Call provider engine to provide detail breakup of charges to be levied
-        $orderChargeDetails = \App\Utils\OrderChargeProvider::provideApplicableCharges($totalOrderAmount, $orderChargeList, 
-                $orderInitiationRequest->deliveryMethod, $orderInitiationRequest->paymentMethod);
+        $orderChargeDetails = \App\Utils\OrderChargeProvider::provideApplicableCharges($totalOrderAmount, 
+                $orderChargeList, $orderInitiationRequest->deliveryMethod, $orderInitiationRequest->paymentMethod);
 
+        //Set delivery date time
+        $deliveryDateTime = null;
+        if (!is_null($orderInitiationRequest->deliverySchedule) || $orderInitiationRequest->deliverySchedule != '') {
+            $deliveryDateTime = \App\Utils\QadmniUtils::convertFromTimestampToDate
+                            ($orderInitiationRequest->deliverySchedule);
+        }
+        //Get latest Rate Of Exchange from database.
+        $roeTable = new \App\Model\Table\RateOfExchangeTable();
+        $roeRecord = $roeTable->getLastUpdatedROE();
+        
+        //Build params and add to table entries
+        $orderHdrParams = \App\Utils\OrderParamBuilder::BuildOrderHeaderParams($orderInitiationRequest, 
+                $orderChargeDetails, $deliveryDateTime, $this->postedCustomerData->customerId, 
+                $producerId, $ItemPriceList, $roeRecord->rate);
+        $orderHeaderTable = new \App\Model\Table\OrderHeaderTable();
+        $orderId = $orderHeaderTable->addNewOrder($orderHdrParams);
+        //If order id is not generated, then throw error to customer
+        if($orderId == 0){
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(114));
+            return;
+        }
+        
+        $orderDtl = new \App\Model\Table\OrderDtlTable();
+        $ordersAdded = $orderDtl->addNewOrders($orderId, $ItemPriceList);
+        
+        $orderChargeTable = new \App\Model\Table\OrderChargesTable();
+        $chargesAdded = $orderChargeTable->addOrderCharges($orderId, $orderChargeDetails->chargeDetailBreakup);
+        
         //Build final response object
         $initiateOrderResponse = new \App\Dto\Responses\InitiateOrderResponseDto();
         $initiateOrderResponse->chargeBreakup = $orderChargeDetails->chargeDetailBreakup;
-        $initiateOrderResponse->orderId = 0;
+        $initiateOrderResponse->orderId = $orderId;
         $initiateOrderResponse->orderedItems = $ItemPriceList;
-        $initiateOrderResponse->totalAmount = $orderChargeDetails->orderTotalAmount;
+        $initiateOrderResponse->totalAmountInSAR = $orderHdrParams->totalAmountInSAR;
+        $initiateOrderResponse->totalAmountInUSD = $orderHdrParams->totalAmountInUSD;
 
         $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(210, $initiateOrderResponse));
     }
@@ -82,12 +119,26 @@ class OrderController extends AppController {
      */
     private function prepareItemList($orderItems) {
         $itemIdList = [];
-        //$itemRecordCounter = 0;
         foreach ($orderItems as $orderItem) {
             array_push($itemIdList, $orderItem->itemId);
-            //$itemIdList[$itemRecordCounter++] = $orderItem->itemId;
         }
         return $itemIdList;
+    }
+
+    /**
+     * Verifies the producer id of all items and if differ then return 0
+     * @param \App\Dto\OrderItemPriceDto $itemPriceList
+     */
+    private function verifyItemProducer($itemPriceList) {
+        $producerId = -1;
+        foreach ($itemPriceList as $itemRecord) {
+            if ($producerId == -1) {
+                $producerId = $itemRecord->producerId;
+            } else if ($producerId != $itemRecord->producerId) {
+                $producerId = 0;
+            }
+        }
+        return $producerId;
     }
 
 }

@@ -51,7 +51,9 @@ class ResponseMessages {
         109 => "Sorry, login was not successful, please try again",
         110 => "Product could not be added at this moment, please try again",
         111 => "Image could not be uploaded, please try again later",
-        112 => "You are not authorized for this request, please login and try again"
+        112 => "You are not authorized for this request, please login and try again",
+        113 => "Cart cannot products from different merchants",
+        114 => "Sorry, error occurred while processing your request, please try again"
     ];
     
     protected static $successDictionary = [

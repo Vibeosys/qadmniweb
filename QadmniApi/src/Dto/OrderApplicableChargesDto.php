@@ -10,7 +10,7 @@ namespace App\Dto;
 
 /**
  * Description of OrderApplicableChargesDto
- *
+ * @property ChargeDetailBreakupDto $chargeDetailBreakup 
  * @author anand
  */
 class OrderApplicableChargesDto {

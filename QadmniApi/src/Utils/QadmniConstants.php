@@ -52,5 +52,16 @@ class QadmniConstants {
      * Payment method cash
      */
     const PAYMENT_METHOD_CASH = 'CA';
-    
+    /**
+     * Transaction status non initiated is NONE 0
+     */
+    const TRANSACTION_STATUS_NONE = 0;
+    /**
+     * Order status initiated as INITIATED 0
+     */
+    const ORDER_STATUS_INITIATED = 0;
+    /**
+     * Delivery status non initiated 0
+     */
+    const DELIVERY_STATUS_INITIATED = 0;
 }

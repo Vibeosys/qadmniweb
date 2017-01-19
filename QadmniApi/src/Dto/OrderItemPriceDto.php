@@ -18,4 +18,5 @@ class OrderItemPriceDto extends OrderItemDto {
     public $unitPrice;
     public $itemTotalPrice;
     public $itemName;
+    public $producerId;
 }

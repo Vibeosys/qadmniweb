@@ -6,18 +6,15 @@
  * and open the template in the editor.
  */
 
-namespace App\Dto\Responses;
+namespace App\Dto;
 
 /**
- * Description of InitiateOrderResponseDto
+ * Description of ExchangeRateDto
  *
  * @author anand
  */
-class InitiateOrderResponseDto {
+class ExchangeRateDto {
     //put your code here
-    public $orderId;
-    public $orderedItems;
-    public $chargeBreakup;
-    public $totalAmountInSAR;
-    public $totalAmountInUSD;
+    public $rate;
+    public $dateUpdated;
 }

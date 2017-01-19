@@ -17,4 +17,5 @@ class ChargeDetailBreakupDto {
     //put your code here
     public $chargeDetails;
     public $amount;
+    public $chargeId;
 }

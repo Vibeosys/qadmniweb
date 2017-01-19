@@ -4,14 +4,13 @@ namespace App\Model\Entity;
 use Cake\ORM\Entity;
 
 /**
- * OrderCharge Entity
+ * RateOfExchange Entity
  *
- * @property int $ChargeAutoId
- * @property int $OrderId
- * @property int $ChargeId
- * @property float $ChargeAmount
+ * @property string $ROEDate
+ * @property float $Rate
+ * @property \Cake\I18n\Time $UpdatedOn
  */
-class OrderCharge extends Entity
+class RateOfExchange extends Entity
 {
 
     /**
@@ -25,6 +24,6 @@ class OrderCharge extends Entity
      */
     protected $_accessible = [
         '*' => true,
-        'ChargeAutoId' => false
+        'ROEDate' => false
     ];
 }

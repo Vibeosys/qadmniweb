@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Model\Table;
 
 use Cake\ORM\Query;
@@ -17,8 +18,7 @@ use Cake\Validation\Validator;
  * @method \App\Model\Entity\OrderHeader[] patchEntities($entities, array $data, array $options = [])
  * @method \App\Model\Entity\OrderHeader findOrCreate($search, callable $callback = null, $options = [])
  */
-class OrderHeaderTable extends Table
-{
+class OrderHeaderTable extends Table {
 
     /**
      * Initialize method
@@ -26,13 +26,16 @@ class OrderHeaderTable extends Table
      * @param array $config The configuration for the Table.
      * @return void
      */
-    public function initialize(array $config)
-    {
+    public function initialize(array $config) {
         parent::initialize($config);
 
         $this->table('order_header');
         $this->displayField('OrderId');
         $this->primaryKey('OrderId');
+    }
+
+    private function getTable() {
+        return \Cake\ORM\TableRegistry::get('order_header');
     }
 
     /**
@@ -41,57 +44,93 @@ class OrderHeaderTable extends Table
      * @param \Cake\Validation\Validator $validator Validator instance.
      * @return \Cake\Validation\Validator
      */
-    public function validationDefault(Validator $validator)
-    {
+    public function validationDefault(Validator $validator) {
         $validator
-            ->integer('OrderId')
-            ->allowEmpty('OrderId', 'create');
+                ->integer('OrderId')
+                ->allowEmpty('OrderId', 'create');
 
         $validator
-            ->dateTime('OrderDate')
-            ->requirePresence('OrderDate', 'create')
-            ->notEmpty('OrderDate');
+                ->dateTime('OrderDate')
+                ->requirePresence('OrderDate', 'create')
+                ->notEmpty('OrderDate');
 
         $validator
-            ->integer('CustomerId')
-            ->requirePresence('CustomerId', 'create')
-            ->notEmpty('CustomerId');
+                ->integer('CustomerId')
+                ->requirePresence('CustomerId', 'create')
+                ->notEmpty('CustomerId');
 
         $validator
-            ->numeric('OrderQty')
-            ->allowEmpty('OrderQty');
+                ->numeric('OrderQty')
+                ->allowEmpty('OrderQty');
 
         $validator
-            ->numeric('AmountSubTotal')
-            ->allowEmpty('AmountSubTotal');
+                ->numeric('AmountSubTotal')
+                ->allowEmpty('AmountSubTotal');
 
         $validator
-            ->integer('Status')
-            ->requirePresence('Status', 'create')
-            ->notEmpty('Status');
+                ->integer('Status')
+                ->requirePresence('Status', 'create')
+                ->notEmpty('Status');
 
         $validator
-            ->integer('ProducerId')
-            ->allowEmpty('ProducerId');
+                ->integer('ProducerId')
+                ->allowEmpty('ProducerId');
 
         $validator
-            ->numeric('TotalAmount')
-            ->allowEmpty('TotalAmount');
+                ->numeric('TotalAmount')
+                ->allowEmpty('TotalAmount');
 
         $validator
-            ->allowEmpty('DeliveryAddress');
+                ->allowEmpty('DeliveryAddress');
 
         $validator
-            ->numeric('DeliveryLat')
-            ->allowEmpty('DeliveryLat');
+                ->numeric('DeliveryLat')
+                ->allowEmpty('DeliveryLat');
 
         $validator
-            ->numeric('DeliveryLong')
-            ->allowEmpty('DeliveryLong');
+                ->numeric('DeliveryLong')
+                ->allowEmpty('DeliveryLong');
 
         $validator
-            ->allowEmpty('DeliveryType');
+                ->allowEmpty('DeliveryType');
 
         return $validator;
     }
+
+    /**
+     * Adds order in Order header
+     * @param \App\Dto\OrderHdrParamsDto $orderHdrParams
+     */
+    public function addNewOrder($orderHdrParams) {
+        $orderId = 0;
+
+        $dbTable = $this->getTable();
+        $dbNewOrder = $dbTable->newEntity();
+
+        $dbNewOrder->OrderDate = new \Cake\I18n\Time();
+        $dbNewOrder->CustomerId = $orderHdrParams->customerId;
+        $dbNewOrder->ProducerId = $orderHdrParams->producerId;
+        $dbNewOrder->DeliveryAddress = $orderHdrParams->orderInitiationRequest->deliveryAddress;
+        $dbNewOrder->DeliveryLat = $orderHdrParams->orderInitiationRequest->deliveryLat;
+        $dbNewOrder->DeliveryLong = $orderHdrParams->orderInitiationRequest->deliveryLong;
+        $dbNewOrder->DeliveryMode = $orderHdrParams->orderInitiationRequest->deliveryMethod;
+        $dbNewOrder->AmountSubTotal = $orderHdrParams->orderSubTotal;
+        $dbNewOrder->Status = $orderHdrParams->orderStatus;
+        $dbNewOrder->TransactionRequired = $orderHdrParams->transRequired;
+        $dbNewOrder->TransactionStatus = $orderHdrParams->transStatus;
+        if (!is_null($orderHdrParams->deliveryDateTime)) {
+            $dbNewOrder->DeliveryDateTime = $orderHdrParams->deliveryDateTime;
+        }
+        $dbNewOrder->PaymentMode = $orderHdrParams->orderInitiationRequest->paymentMethod;
+        $dbNewOrder->OrderQty = $orderHdrParams->orderQty;
+        $dbNewOrder->TotalAmount = $orderHdrParams->totalAmountInSAR;
+        $dbNewOrder->DeliveryStatusId = $orderHdrParams->deliveryStatus;
+        $dbNewOrder->TotalAmountInUSD = $orderHdrParams->totalAmountInUSD;
+        
+        if ($dbTable->save($dbNewOrder)) {
+            $orderId = $dbNewOrder->OrderId;
+        }
+        return $orderId;
+    }
+
 }

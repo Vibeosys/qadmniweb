@@ -18,6 +18,13 @@ use Cake\ORM\Entity;
  * @property float $DeliveryLat
  * @property float $DeliveryLong
  * @property string $DeliveryType
+ * @property int $TransactionRequired 
+ * @property string $PaymentMode 
+ * @property string $DeliveryMode
+ * @property int $TransactionStatus 
+ * @property \Cake\I18n\Time $DeliveryDateTime 
+ * @property int $DeliveryStatusId
+ * @property float $TotalAmountInUSD
  */
 class OrderHeader extends Entity
 {

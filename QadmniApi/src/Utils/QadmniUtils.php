@@ -89,4 +89,15 @@ class QadmniUtils {
         }
         return 'PP';
     }
+    
+    /**
+     * Converts from TimeStamp to DATE TIME
+     * @param type $timeStamp
+     * @return \Cake\I18n\Time
+     */
+    public static function convertFromTimestampToDate($timeStamp){
+        $tm =  new \Cake\I18n\Time(); 
+        $tm->setTimestamp($timeStamp);
+        return $tm;
+    }
 }
