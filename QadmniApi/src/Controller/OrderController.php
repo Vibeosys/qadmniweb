@@ -62,9 +62,7 @@ class OrderController extends AppController {
         $roeRecord = $roeTable->getLastUpdatedROE();
 
         //Build params and add to table entries
-        $orderHdrParams = \App\Utils\OrderParamBuilder::BuildOrderHeaderParams($orderInitiationRequest, 
-                $orderChargeDetails, $deliveryDateTime, $this->postedCustomerData->customerId, 
-                $producerId, $ItemPriceList, $roeRecord->rate);
+        $orderHdrParams = \App\Utils\OrderParamBuilder::BuildOrderHeaderParams($orderInitiationRequest, $orderChargeDetails, $deliveryDateTime, $this->postedCustomerData->customerId, $producerId, $ItemPriceList, $roeRecord->rate);
         $orderHeaderTable = new \App\Model\Table\OrderHeaderTable();
         $orderId = $orderHeaderTable->addNewOrder($orderHdrParams);
         //If order id is not generated, then throw error to customer
@@ -116,19 +114,16 @@ class OrderController extends AppController {
         //If db values are matching with request values then go ahead else throw error
         if ($orderAmtMatch && $orderAmtUsdMatch && $orderStatusMatch) {
             //Update the order status to pending
-            $statusUpdated = $orderHdrTable->updateOrderStatus($processOrderRequest->orderId, 
-                    \App\Utils\QadmniConstants::ORDER_STATUS_PENDING);
+            $statusUpdated = $orderHdrTable->updateOrderStatus($processOrderRequest->orderId, \App\Utils\QadmniConstants::ORDER_STATUS_PENDING);
 
             if (!$statusUpdated) {
                 \Cake\Log\Log::error('Order status not updated for order ' . $processOrderRequest->orderId);
             }
 
             $paymentTable = new \App\Model\Table\PaymentsTable();
-            $transactionId = \App\Utils\QadmniUtils::generateTransactionId($this->postedCustomerData->customerId, 
-                    $orderDetails->orderId);
+            $transactionId = \App\Utils\QadmniUtils::generateTransactionId($this->postedCustomerData->customerId, $orderDetails->orderId);
             //Create new transaction
-            $transactionCreationSuccess = $paymentTable->addNewTransaction($transactionId, $orderDetails->orderId, 
-                    $orderDetails->orderAmountInUSD);
+            $transactionCreationSuccess = $paymentTable->addNewTransaction($transactionId, $orderDetails->orderId, $orderDetails->orderAmountInUSD);
 
             if (!$transactionCreationSuccess) {
                 \Cake\Log\Log::error('Transaction could not be created for trans id ' . $transactionId);
@@ -147,11 +142,166 @@ class OrderController extends AppController {
                 $paypalInfo = \App\Utils\QadmniUtils::buildPaypalInfo($orderDetails->orderAmountInUSD);
                 $processOrderResponse->paypalEnvValues = $paypalInfo;
             }
-            
+
             $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(211, $processOrderResponse));
         } else {
             $this->response->body(\App\Utils\ResponseMessages::prepareError(115));
         }
+    }
+
+    public function confirmOrder() {
+        $this->apiInitialize();
+        //Validate customer first
+        $isCustomerValidated = $this->validateCustomer();
+        if (!$isCustomerValidated) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(112));
+            return;
+        }
+
+        $confirmOrderRequest = \App\Dto\Requests\ConfirmOrderRequestDto::Deserialize($this->postedData);
+        $paymentTable = new \App\Model\Table\PaymentsTable();
+        $orderTransactionDetails = $paymentTable->getTransactionDetails($confirmOrderRequest->orderId, 
+                $confirmOrderRequest->transactionId);
+        //If could not retrieve the record then throw user back
+        if (!$orderTransactionDetails) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(115));
+            return;
+        }
+        //Validate else do not proceed further
+        $isOrderConfirmationValid = $this->validateOrderConfirmation($orderTransactionDetails, $confirmOrderRequest);
+        if (!$isOrderConfirmationValid) {
+            return;
+        }
+        $isSuccess = false;
+        $orderHeaderTable = new \App\Model\Table\OrderHeaderTable();
+
+        if ($orderTransactionDetails->transactionRequired) {
+            $isSuccess = $this->processPaypalTransaction($confirmOrderRequest, $paymentTable, $orderHeaderTable);
+        } else {
+            $isSuccess = $this->processCashTransaction($orderHeaderTable, 
+                    $paymentTable, $confirmOrderRequest->orderId, $confirmOrderRequest->transactionId);
+        }
+
+        //If above transactions are not successful then dont go ahead
+        if (!$isSuccess) {
+            return;
+        }
+
+        $orderNotificationDetails = $orderHeaderTable->getProducerCustomerInfo($confirmOrderRequest->orderId);
+        $this->sendConfirmationNotificationToCustomers($orderNotificationDetails->customerPushId, 
+                $orderNotificationDetails->customerOsType);
+        $this->sendConfirmationNotificationToProducers($orderNotificationDetails->producerPushId, 
+                $orderNotificationDetails->producerOsType);
+
+        $this->response->body(\App\Utils\ResponseMessages::prepareSuccessMessage(212));
+    }
+
+    /**
+     * Validates order based on parameters
+     * @param \App\Dto\OrderTransactionDetailDto $orderTransactionDetails
+     * @param \App\Dto\Requests\ConfirmOrderRequestDto $confirmOrderRequest
+     * @return boolean
+     */
+    private function validateOrderConfirmation($orderTransactionDetails, $confirmOrderRequest) {
+        $isOrderConfirmationValid = true;
+
+        $isAmountInSarMatching = $orderTransactionDetails->amountInSAR == $confirmOrderRequest->amountInSAR;
+        $isAmountInUsdMatching = $orderTransactionDetails->amountInUSD == $confirmOrderRequest->amountInUSD;
+        $isCustomerIdMatching = $orderTransactionDetails->customerId == $this->postedCustomerData->customerId;
+
+        //If the details are not matching then throw the user back
+        if (!$isAmountInSarMatching || !$isAmountInUsdMatching || !$isCustomerIdMatching) {
+            $isOrderConfirmationValid = false;
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(115));
+            return $isOrderConfirmationValid;
+        }
+
+        //If the order status and payment status do not match to the desired values throw user back
+        if (!$orderTransactionDetails->orderStatus == \App\Utils\QadmniConstants::ORDER_STATUS_PENDING 
+                || !$orderTransactionDetails->transactionStatus == \App\Utils\QadmniConstants::TRANSACTION_STATUS_NONE) {
+            $isOrderConfirmationValid = false;
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(117));
+            return $isOrderConfirmationValid;
+        }
+
+        //If transaction id required and paypal id is not provided then throw error
+        if ($orderTransactionDetails->transactionRequired) {
+            if (is_null($confirmOrderRequest->paypalId) || $confirmOrderRequest->paypalId == '') {
+                $isOrderConfirmationValid = false;
+                $this->response->body(\App\Utils\ResponseMessages::prepareError(116));
+                return $isOrderConfirmationValid;
+            }
+        }
+
+        return $isOrderConfirmationValid;
+    }
+
+    private function sendConfirmationNotificationToCustomers($customerDeviceId, $platform) {
+        if ($platform == \App\Utils\QadmniConstants::ANDROID_OS_TYPE) {
+            //$englishContent = 'Thank you for placing your order with us. We will keep you updated about your order';
+            $notificationFacade = new \App\Utils\PushNotificationFacade();
+            $notificationSent = $notificationFacade->setTemplate(\App\Utils\QadmniConstants::NOTIFICATION_ORDER_CONFIRMATION_TEMPLATE_ID)
+                    ->setAndroidDevices([$customerDeviceId])
+                    ->sendAndroidNotifications();
+        }
+    }
+
+    private function sendConfirmationNotificationToProducers($producerDeviceId, $platform) {
+        if ($platform == \App\Utils\QadmniConstants::ANDROID_OS_TYPE) {
+            //$englishContent = 'Thank you for placing your order with us. We will keep you updated about your order';
+            $notificationFacade = new \App\Utils\PushNotificationFacade();
+            $notificationSent = $notificationFacade->setTemplate(\App\Utils\QadmniConstants::NOTIFICATION_ORDER_CONFIRMATION_PRODUCER_TEMPLATE_ID)
+                    ->setAndroidDevices([$producerDeviceId])
+                    ->sendAndroidNotifications();
+        }
+    }
+
+    /**
+     * Processes order confirmation
+     * @param \App\Model\Table\OrderHeaderTable $orderHeaderTable
+     * @param \App\Model\Table\PaymentsTable $paymentsTable
+     */
+    private function processCashTransaction($orderHeaderTable, $paymentsTable, $orderId, $transId) {
+        $statusUpdated = $orderHeaderTable->updateOrderAndTransactionStatus($orderId, 
+                \App\Utils\QadmniConstants::ORDER_STATUS_CONFIRMED, 
+                \App\Utils\QadmniConstants::TRANSACTION_STATUS_APPROVED);
+
+        $paymentStatusUpdated = $paymentsTable->updateTransactionStatus($transId, 
+                \App\Utils\QadmniConstants::TRANSACTION_STATUS_APPROVED, 
+                \App\Utils\QadmniConstants::PAYMENT_METHOD_CASH_IN_STRING, 
+                \App\Utils\QadmniConstants::PAYMENT_METHOD_CASH);
+
+        return $statusUpdated && $paymentStatusUpdated;
+    }
+
+    /**
+     * Process paypal trans info
+     * @param \App\Dto\Requests\ConfirmOrderRequestDto $confirmOrderRequest
+     * @param \App\Model\Table\PaymentsTable $paymentTable
+     * @param \App\Model\Table\OrderHeaderTable $orderHeaderTable
+     * @return boolean
+     */
+    private function processPaypalTransaction($confirmOrderRequest, $paymentTable, $orderHeaderTable) {
+        $confirmed = true;
+        //Confirm paypal transaction
+        $paypalResponse = \App\Utils\PaypalResponseReader::readPaypalResponse($confirmOrderRequest->paypalId);
+        $transactionStatus = 0;
+        if ($paypalResponse->isApproved) {
+            $transactionStatus = \App\Utils\QadmniConstants::TRANSACTION_STATUS_APPROVED;
+        } else {
+            $transactionStatus = \App\Utils\QadmniConstants::TRANSACTION_STATUS_REJECTED;
+        }
+
+        $transStatusUpdated = $paymentTable->updatePaypalStatus($paypalResponse->qadmniTransId, $paypalResponse->paypalId, $transactionStatus, $paypalResponse->paymentMethod, \App\Utils\QadmniConstants::PAYMENT_METHOD_PAYPAL);
+        $orderTransStatusUpdated = $orderHeaderTable->updateOrderTransactionStatus($confirmOrderRequest->orderId, $transactionStatus);
+
+        if (!$paypalResponse->isApproved) {
+            $confirmed = false;
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(117));
+        } else {
+            $orderStatusUpdated = $orderHeaderTable->updateOrderStatus($confirmOrderRequest->orderId, \App\Utils\QadmniConstants::ORDER_STATUS_CONFIRMED);
+        }
+        return $confirmed;
     }
 
     /**

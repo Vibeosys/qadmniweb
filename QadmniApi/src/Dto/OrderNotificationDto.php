@@ -9,14 +9,14 @@
 namespace App\Dto;
 
 /**
- * Description of PaypalEnvValuesDto
+ * Description of OrderNotificationDto
  *
  * @author anand
  */
-class PaypalEnvValuesDto {
+class OrderNotificationDto {
     //put your code here
-    public $paypalDesc;
-    public $environment;
-    public $clientId;
-    public $secretKey;
+    public $customerPushId;
+    public $customerOsType;
+    public $producerPushId;
+    public $producerOsType;
 }

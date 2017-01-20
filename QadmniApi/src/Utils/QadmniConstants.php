@@ -19,7 +19,14 @@ class QadmniConstants {
      * Image path directory Qadmni
      */
     const IMAGE_PATH_DIRECTORY = 'images';
-
+    /**
+     * Android OS type
+     */
+    const ANDROID_OS_TYPE = 'AN';
+    /**
+     * IOS OS type
+     */
+    const IOS_OS_TYPE = 'IO';
     /**
      * Online payment like paypal
      */
@@ -53,9 +60,21 @@ class QadmniConstants {
      */
     const PAYMENT_METHOD_CASH = 'CA';
     /**
+     * Payment method cash in string format
+     */
+    const PAYMENT_METHOD_CASH_IN_STRING = 'Cash';
+    /**
      * Transaction status non initiated is NONE 0
      */
     const TRANSACTION_STATUS_NONE = 0;
+    /**
+     * Transaction status rejected
+     */
+    const TRANSACTION_STATUS_REJECTED = 1;
+    /**
+     * Transaction status approved
+     */
+    const TRANSACTION_STATUS_APPROVED = 2;
     /**
      * Order status initiated as INITIATED 0
      */
@@ -64,6 +83,10 @@ class QadmniConstants {
      * Order status pending as PENDING 1
      */
     const ORDER_STATUS_PENDING = 1;
+    /**
+     * Order status confirmed as CONFIRMED 2
+     */
+    const ORDER_STATUS_CONFIRMED = 2;
     /**
      * Delivery status non initiated 0
      */
@@ -100,4 +123,20 @@ class QadmniConstants {
      * Paypal live secret
      */
     const PAYPAL_LIVE_SECRET = 'ECAxCecKjAa1XUga2A4l7NvL9IYwm3dFUkAVtQ_SL_4gOzWcG4-z2uqHTmcyKMXA_Wbkk1ih5CgmBqzp';
+    /**
+     * One signal App ID
+     */
+    const ONESIGNAL_APP_ID = '29d2c9ef-09ee-468b-96c9-b26340758d9a';
+    /**
+     * One signal AUTH key 
+     */
+    const ONESIGNAL_APP_AUTH_KEY = 'YTU2ZGZlMWItMjg4MC00Mjc5LWI2MjUtNzk5OTdhMWYxNWQ3';
+    /**
+     * One signal notification template id for Order confirmation
+     */
+    const NOTIFICATION_ORDER_CONFIRMATION_TEMPLATE_ID = '9507269b-1da7-4568-a808-c732e5441953';
+    /**
+     * One signal notification template id for Order confirmation for Producers
+     */
+    const NOTIFICATION_ORDER_CONFIRMATION_PRODUCER_TEMPLATE_ID = '87c98ec6-ee12-4538-9eac-15c2a6f0a174';
 }

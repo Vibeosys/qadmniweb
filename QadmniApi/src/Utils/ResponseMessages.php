@@ -54,7 +54,9 @@ class ResponseMessages {
         112 => "You are not authorized for this request, please login and try again",
         113 => "Cart cannot products from different merchants",
         114 => "Sorry, error occurred while processing your request, please try again",
-        115 => "Sorry, something went wrong, please try again with fresh order"
+        115 => "Sorry, something went wrong, please try again with fresh order",
+        116 => "This transaction requires paypal id, please provide and proceed",
+        117 => "Order status has to be pending and transaction status to be initiated"
     ];
     
     protected static $successDictionary = [
@@ -68,7 +70,8 @@ class ResponseMessages {
         208 => "Product added successfully",
         209 => "Image for the product added or updated successfully",
         210 => "Order initiated successfully, please proceed to confirmation",
-        211 => "Order is processed successfully, please confirm to proceed further"
+        211 => "Order is processed successfully, please confirm to proceed further",
+        212 => "Yalla! your order is confirmed"
     ];
 
 }

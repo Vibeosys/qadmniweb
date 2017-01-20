@@ -177,5 +177,72 @@ class OrderHeaderTable extends Table {
         }
         return $statusUpdated;
     }
+    
+    public function updateOrderTransactionStatus($orderId, $transactionStatus){
+        $statusUpdated = false;
+        $dbOrder = $this->getTable()->find()
+                ->where(['OrderId' => $orderId])
+                ->select(['OrderId', 'TransactionStatus'])
+                ->first();
+        
+        if($dbOrder){
+            $dbOrder->TransactionStatus = $transactionStatus;
+            if($this->getTable()->save($dbOrder)){
+                $statusUpdated = true;
+            }
+        }
+        return $statusUpdated;
+    }
+    
+    public function updateOrderAndTransactionStatus($orderId, $orderStatus, $transStatus){
+        $statusUpdated = false;
+        $dbOrder = $this->getTable()->find()
+                ->where(['OrderId' => $orderId])
+                ->select(['OrderId', 'Status', 'TransactionStatus'])
+                ->first();
+        
+        if($dbOrder){
+            $dbOrder->Status = $orderStatus;
+            $dbOrder->TransactionStatus = $transStatus;
+            if($this->getTable()->save($dbOrder)){
+                $statusUpdated = true;
+            }
+        }
+        return $statusUpdated;
+    }
             
+    /**
+     * Gets information about order related to notifications
+     * @param int $orderId
+     * @return \App\Dto\OrderNotificationDto
+     */
+    public function getProducerCustomerInfo($orderId){
+        $orderNotification = null;
+        $thisTable = $this->getTable();
+        $thisTable->belongsTo('customer', [
+            'foreignKey' => 'customerId',
+            'joinType' => 'INNER'
+        ]);
+        
+        $thisTable->belongsTo('producer', [
+            'foreignKey' => 'producerId',
+            'joinType' => 'INNER'
+        ]);
+        
+        $dbRecord = $thisTable->find()
+                ->contain(['customer', 'producer'])
+                ->where(['OrderId' => $orderId])
+                ->select(['OrderId', 'producer.ProducerPushId', 'producer.ProducerOsVersionType', 'customer.PushId', 'customer.OsVersionType'])
+                ->first();
+        
+        if($dbRecord){
+            $orderNotification = new \App\Dto\OrderNotificationDto();
+            $orderNotification->customerOsType = $dbRecord->customer->OsVersionType;
+            $orderNotification->customerPushId = $dbRecord->customer->PushId;
+            $orderNotification->producerOsType = $dbRecord->producer->ProducerOsVersionType;
+            $orderNotification->producerPushId = $dbRecord->producer->ProducerPushId;
+        }
+        
+        return $orderNotification;
+    }
 }

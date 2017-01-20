@@ -116,7 +116,7 @@ class QadmniUtils {
 
     /**
      * Builds paypal values to return to app
-     * @param type $amount
+     * @param float $amount
      * @return \App\Dto\PaypalEnvValuesDto
      */
     public static function buildPaypalInfo($amount) {
@@ -127,6 +127,22 @@ class QadmniUtils {
             $paypalInfo->clientId = QadmniConstants::PAYPAL_SANDBOX_CLIENT_ID;
         } else {
             $paypalInfo->clientId = QadmniConstants::PAYPAL_LIVE_CLIENT_ID;
+        }
+        return $paypalInfo;
+    }
+    
+    /**
+     * Gets a caller for paypal 
+     * @return \App\Dto\PaypalEnvValuesDto
+     */
+    public static function buildPaypalCaller(){
+        $paypalInfo = new \App\Dto\PaypalEnvValuesDto();
+        if (QadmniConstants::PAYPAL_ENV != 'live') {
+            $paypalInfo->clientId = QadmniConstants::PAYPAL_SANDBOX_CLIENT_ID;
+            $paypalInfo->secretKey = QadmniConstants::PAYPAL_SANDBOX_SECRET;
+        } else {
+            $paypalInfo->clientId = QadmniConstants::PAYPAL_LIVE_CLIENT_ID;
+            $paypalInfo->secretKey = QadmniConstants::PAYPAL_LIVE_SECRET;
         }
         return $paypalInfo;
     }

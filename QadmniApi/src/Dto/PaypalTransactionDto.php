@@ -9,14 +9,15 @@
 namespace App\Dto;
 
 /**
- * Description of PaypalEnvValuesDto
+ * Description of PaypalTransactionDto
  *
  * @author anand
  */
-class PaypalEnvValuesDto {
+class PaypalTransactionDto {
+
     //put your code here
-    public $paypalDesc;
-    public $environment;
-    public $clientId;
-    public $secretKey;
+    public $paypalId;
+    public $paymentMethod;
+    public $isApproved;
+    public $qadmniTransId;
 }
