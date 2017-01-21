@@ -92,6 +92,34 @@ class QadmniConstants {
      */
     const DELIVERY_STATUS_INITIATED = 0;
     /**
+     * Delivery status requested 1
+     */
+    const DELIVERY_STATUS_REQUESTED = 1;
+    /**
+     * Delivery status confirmed 2 
+     */
+    const DELIVERY_STATUS_CONFIRMED = 2;
+    /**
+     * Delivery status in process 3
+     */
+    const DELIVERY_STATUS_IN_PROCESS = 3;
+    /**
+     * Delivery status delivered 4
+     */
+    const DELIVERY_STATUS_DELIVERED = 4;
+    /**
+     * Delivery status pickup requested 5
+     */
+    const DELIVERY_STATUS_PICKUP_REQUESTED = 5;
+    /**
+     * Delivery status pickup complete 6
+     */
+    const DELIVERY_STATUS_PICKUP_COMPLETE = 6;
+    /**
+     * Delivery status pickup not done 7
+     */
+    const DELIVERY_STATUS_NOT_PICKED_UP = 7;
+    /**
      * Payment currency is USD
      */
     const PAYMENT_CURRENCY = 'USD';
@@ -139,4 +167,12 @@ class QadmniConstants {
      * One signal notification template id for Order confirmation for Producers
      */
     const NOTIFICATION_ORDER_CONFIRMATION_PRODUCER_TEMPLATE_ID = '87c98ec6-ee12-4538-9eac-15c2a6f0a174';
+    /**
+     * Exchange rate API URL
+     */
+    const EXCHANGE_RATE_API_URL = "http://apilayer.net/api/live?access_key=0eeb90120a4a52fc97b7ba1d91a5c389&currencies=SAR";
+    /**
+     * Exchange API call enabled? true or false
+     */
+    const IS_EXCHANGE_API_CALL_ENABLED = false;
 }

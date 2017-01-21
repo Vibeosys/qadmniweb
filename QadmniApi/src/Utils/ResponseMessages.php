@@ -56,7 +56,9 @@ class ResponseMessages {
         114 => "Sorry, error occurred while processing your request, please try again",
         115 => "Sorry, something went wrong, please try again with fresh order",
         116 => "This transaction requires paypal id, please provide and proceed",
-        117 => "Order status has to be pending and transaction status to be initiated"
+        117 => "Order status has to be pending and transaction status to be initiated",
+        118 => "No live orders found, please order now",
+        119 => "You do not have any past orders, order now"
     ];
     
     protected static $successDictionary = [
@@ -71,7 +73,9 @@ class ResponseMessages {
         209 => "Image for the product added or updated successfully",
         210 => "Order initiated successfully, please proceed to confirmation",
         211 => "Order is processed successfully, please confirm to proceed further",
-        212 => "Yalla! your order is confirmed"
+        212 => "Yalla! your order is confirmed",
+        213 => "LIVE order deliveries",
+        214 => "Past order deliveries"
     ];
 
 }

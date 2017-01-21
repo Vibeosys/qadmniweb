@@ -67,6 +67,9 @@ Router::scope('/', function (RouteBuilder $routes) {
     $routes->connect('initiateorder', ['controller' => 'Order', 'action' => 'initiateOrder']);
     $routes->connect('processorder', ['controller' => 'Order', 'action' => 'processOrder']);
     $routes->connect('confirmorder', ['controller' => 'Order', 'action' => 'confirmOrder']);
+    $routes->connect('liveorderlist', ['controller' => 'OrderHeader', 'action' => 'getLiveOrderList']);
+    $routes->connect('pastorderlist', ['controller' => 'OrderHeader', 'action' => 'getPastOrderList']);
+
     /**
      * Connect catchall routes for all controllers.
      *

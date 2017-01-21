@@ -151,98 +151,187 @@ class OrderHeaderTable extends Table {
             $orderDetails->orderAmountInUSD = $dbOrder->TotalAmountInUSD;
             $orderDetails->orderId = $dbOrder->OrderId;
             $orderDetails->orderStatus = $dbOrder->Status;
-            $orderDetails->transactionRequired = $dbOrder->TransactionRequired == 1? true : false;
-        }   
+            $orderDetails->transactionRequired = $dbOrder->TransactionRequired == 1 ? true : false;
+        }
         return $orderDetails;
     }
-    
+
     /**
      * Updates given status for the order
      * @param int $orderId
      * @param int $orderStatus
      * @return boolean
      */
-    public function updateOrderStatus($orderId, $orderStatus){
+    public function updateOrderStatus($orderId, $orderStatus) {
         $statusUpdated = false;
         $dbOrder = $this->getTable()->find()
                 ->where(['OrderId' => $orderId])
                 ->select(['OrderId', 'Status'])
                 ->first();
-        
-        if($dbOrder){
+
+        if ($dbOrder) {
             $dbOrder->Status = $orderStatus;
-            if($this->getTable()->save($dbOrder)){
+            if ($this->getTable()->save($dbOrder)) {
                 $statusUpdated = true;
             }
         }
         return $statusUpdated;
     }
-    
-    public function updateOrderTransactionStatus($orderId, $transactionStatus){
+
+    public function updateOrderTransactionStatus($orderId, $transactionStatus) {
         $statusUpdated = false;
         $dbOrder = $this->getTable()->find()
                 ->where(['OrderId' => $orderId])
                 ->select(['OrderId', 'TransactionStatus'])
                 ->first();
-        
-        if($dbOrder){
+
+        if ($dbOrder) {
             $dbOrder->TransactionStatus = $transactionStatus;
-            if($this->getTable()->save($dbOrder)){
+            if ($this->getTable()->save($dbOrder)) {
                 $statusUpdated = true;
             }
         }
         return $statusUpdated;
     }
-    
-    public function updateOrderAndTransactionStatus($orderId, $orderStatus, $transStatus){
+
+    public function updateOrderAndTransactionStatus($orderId, $orderStatus, $transStatus) {
         $statusUpdated = false;
         $dbOrder = $this->getTable()->find()
                 ->where(['OrderId' => $orderId])
                 ->select(['OrderId', 'Status', 'TransactionStatus'])
                 ->first();
-        
-        if($dbOrder){
+
+        if ($dbOrder) {
             $dbOrder->Status = $orderStatus;
             $dbOrder->TransactionStatus = $transStatus;
-            if($this->getTable()->save($dbOrder)){
+            if ($this->getTable()->save($dbOrder)) {
                 $statusUpdated = true;
             }
         }
         return $statusUpdated;
     }
-            
+
     /**
      * Gets information about order related to notifications
      * @param int $orderId
      * @return \App\Dto\OrderNotificationDto
      */
-    public function getProducerCustomerInfo($orderId){
+    public function getProducerCustomerInfo($orderId) {
         $orderNotification = null;
         $thisTable = $this->getTable();
         $thisTable->belongsTo('customer', [
             'foreignKey' => 'customerId',
             'joinType' => 'INNER'
         ]);
-        
+
         $thisTable->belongsTo('producer', [
             'foreignKey' => 'producerId',
             'joinType' => 'INNER'
         ]);
-        
+
         $dbRecord = $thisTable->find()
                 ->contain(['customer', 'producer'])
                 ->where(['OrderId' => $orderId])
                 ->select(['OrderId', 'producer.ProducerPushId', 'producer.ProducerOsVersionType', 'customer.PushId', 'customer.OsVersionType'])
                 ->first();
-        
-        if($dbRecord){
+
+        if ($dbRecord) {
             $orderNotification = new \App\Dto\OrderNotificationDto();
             $orderNotification->customerOsType = $dbRecord->customer->OsVersionType;
             $orderNotification->customerPushId = $dbRecord->customer->PushId;
             $orderNotification->producerOsType = $dbRecord->producer->ProducerOsVersionType;
             $orderNotification->producerPushId = $dbRecord->producer->ProducerPushId;
         }
-        
+
         return $orderNotification;
     }
+
+    /**
+     * Gets live order list for a customer
+     * @param type $customerId
+     * @param type $langCode
+     * @return \App\Dto\Responses\LiveOrderResponseDto
+     */
+    public function getLiveOrderList($customerId, $langCode) {
+        $liveOrderResponseList = null;
+        $this->belongsTo('producer', ['foreignKey' => 'producerId', 'joinType' => 'INNER']);
+
+        /* $deliveryStatusExclusionList = [\App\Utils\QadmniConstants::DELIVERY_STATUS_DELIVERED,
+          \App\Utils\QadmniConstants::DELIVERY_STATUS_PICKUP_COMPLETE,
+          \App\Utils\QadmniConstants::DELIVERY_STATUS_NOT_PICKED_UP]; */
+        $businessName = 'BusinessName_' . $langCode;
+        $liveOrderResult = $this->find()
+                ->contain(['producer'])
+                ->where(['CustomerId' => $customerId, 'Status' => \App\Utils\QadmniConstants::ORDER_STATUS_CONFIRMED])
+                /* ->where(['DeliveryStatusId NOT IN ' => $deliveryStatusExclusionList]) */
+                ->where(['DeliveredOn IS NULL OR DeliveredOn >= date_sub(now(), interval 2 day)'])
+                ->select(['OrderId',
+                    'OrderDate',
+                    'TotalAmount',
+                    'PaymentMode',
+                    'DeliveryMode',
+                    'DeliveryStatusId',
+                    'producer.' . $businessName])
+                ->all();
+
+        $liveOrderList = $liveOrderResult->toArray();
+        $recordCounter = 0;
+
+        foreach ($liveOrderList as $liveOrderRecord) {
+            $liveOrderResponse = new \App\Dto\Responses\LiveOrderResponseDto();
+            $liveOrderResponse->amountInSAR = $liveOrderRecord->TotalAmount;
+            $liveOrderResponse->deliveryMode = $liveOrderRecord->DeliveryMode;
+            $liveOrderResponse->paymentMode = $liveOrderRecord->PaymentMode;
+            $liveOrderResponse->orderId = $liveOrderRecord->OrderId;
+            $liveOrderResponse->orderDate = $liveOrderRecord->OrderDate;
+            $liveOrderResponse->producerBusinessName = $liveOrderRecord->producer->$businessName;
+            $liveOrderResponse->deliveryStatus = $liveOrderRecord->DeliveryStatusId;
+
+            $liveOrderResponseList[$recordCounter++] = $liveOrderResponse;
+        }
+        return $liveOrderResponseList;
+    }
+
+    public function getPastOrderList($customerId, $langCode) {
+        $pastOrderListResponse = null;
+        $this->belongsTo('producer', ['foreignKey' => 'producerId', 'joinType' => 'INNER']);
+
+        $deliveryStatusExclusionList = [\App\Utils\QadmniConstants::DELIVERY_STATUS_DELIVERED,
+            \App\Utils\QadmniConstants::DELIVERY_STATUS_PICKUP_COMPLETE,
+            \App\Utils\QadmniConstants::DELIVERY_STATUS_NOT_PICKED_UP];
+
+        $businessName = 'BusinessName_' . $langCode;
+        $pastOrderResult = $this->find()
+                ->contain(['producer'])
+                ->where(['CustomerId' => $customerId,
+                    'Status' => \App\Utils\QadmniConstants::ORDER_STATUS_CONFIRMED,
+                    'DeliveryStatusId IN ' => $deliveryStatusExclusionList,
+                    'DeliveredOn < date_sub(now(), interval 2 day)'])
+                ->select(['OrderId',
+                    'OrderDate',
+                    'TotalAmount',
+                    'PaymentMode',
+                    'DeliveryMode',
+                    'DeliveryStatusId',
+                    'producer.' . $businessName]);
+                //->all();
+
+        $pastOrderList  = $pastOrderResult->toArray();
+        $recordCounter = 0;
+
+        foreach ($pastOrderList as $pastOrderRecord) {
+            $pastOrderResponse = new \App\Dto\Responses\PastOrderListResponseDto();
+            $pastOrderResponse->amountInSAR = $pastOrderRecord->TotalAmount;
+            $pastOrderResponse->deliveryMode = $pastOrderRecord->DeliveryMode;
+            $pastOrderResponse->paymentMode = $pastOrderRecord->PaymentMode;
+            $pastOrderResponse->orderId = $pastOrderRecord->OrderId;
+            $pastOrderResponse->orderDate = $pastOrderRecord->OrderDate;
+            $pastOrderResponse->producerBusinessName = $pastOrderRecord->producer->$businessName;
+            $pastOrderResponse->deliveryStatusCode = $pastOrderRecord->DeliveryStatusId;
+
+            $pastOrderListResponse[$recordCounter++] = $pastOrderResponse;
+        }
+        return $pastOrderListResponse;
+    }
+
 }

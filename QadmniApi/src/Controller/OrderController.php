@@ -60,7 +60,10 @@ class OrderController extends AppController {
         //Get latest Rate Of Exchange from database.
         $roeTable = new \App\Model\Table\RateOfExchangeTable();
         $roeRecord = $roeTable->getLastUpdatedROE();
-
+        $newExchangeRate = $this->callExchangeApi($roeRecord);
+        if ($newExchangeRate != null) {
+            $successAdded = $roeTable->addNewExchangeRate($newExchangeRate);
+        }
         //Build params and add to table entries
         $orderHdrParams = \App\Utils\OrderParamBuilder::BuildOrderHeaderParams($orderInitiationRequest, $orderChargeDetails, $deliveryDateTime, $this->postedCustomerData->customerId, $producerId, $ItemPriceList, $roeRecord->rate);
         $orderHeaderTable = new \App\Model\Table\OrderHeaderTable();
@@ -160,8 +163,7 @@ class OrderController extends AppController {
 
         $confirmOrderRequest = \App\Dto\Requests\ConfirmOrderRequestDto::Deserialize($this->postedData);
         $paymentTable = new \App\Model\Table\PaymentsTable();
-        $orderTransactionDetails = $paymentTable->getTransactionDetails($confirmOrderRequest->orderId, 
-                $confirmOrderRequest->transactionId);
+        $orderTransactionDetails = $paymentTable->getTransactionDetails($confirmOrderRequest->orderId, $confirmOrderRequest->transactionId);
         //If could not retrieve the record then throw user back
         if (!$orderTransactionDetails) {
             $this->response->body(\App\Utils\ResponseMessages::prepareError(115));
@@ -178,8 +180,7 @@ class OrderController extends AppController {
         if ($orderTransactionDetails->transactionRequired) {
             $isSuccess = $this->processPaypalTransaction($confirmOrderRequest, $paymentTable, $orderHeaderTable);
         } else {
-            $isSuccess = $this->processCashTransaction($orderHeaderTable, 
-                    $paymentTable, $confirmOrderRequest->orderId, $confirmOrderRequest->transactionId);
+            $isSuccess = $this->processCashTransaction($orderHeaderTable, $paymentTable, $confirmOrderRequest->orderId, $confirmOrderRequest->transactionId);
         }
 
         //If above transactions are not successful then dont go ahead
@@ -188,10 +189,8 @@ class OrderController extends AppController {
         }
 
         $orderNotificationDetails = $orderHeaderTable->getProducerCustomerInfo($confirmOrderRequest->orderId);
-        $this->sendConfirmationNotificationToCustomers($orderNotificationDetails->customerPushId, 
-                $orderNotificationDetails->customerOsType);
-        $this->sendConfirmationNotificationToProducers($orderNotificationDetails->producerPushId, 
-                $orderNotificationDetails->producerOsType);
+        $this->sendConfirmationNotificationToCustomers($orderNotificationDetails->customerPushId, $orderNotificationDetails->customerOsType);
+        $this->sendConfirmationNotificationToProducers($orderNotificationDetails->producerPushId, $orderNotificationDetails->producerOsType);
 
         $this->response->body(\App\Utils\ResponseMessages::prepareSuccessMessage(212));
     }
@@ -217,8 +216,7 @@ class OrderController extends AppController {
         }
 
         //If the order status and payment status do not match to the desired values throw user back
-        if (!$orderTransactionDetails->orderStatus == \App\Utils\QadmniConstants::ORDER_STATUS_PENDING 
-                || !$orderTransactionDetails->transactionStatus == \App\Utils\QadmniConstants::TRANSACTION_STATUS_NONE) {
+        if (!$orderTransactionDetails->orderStatus == \App\Utils\QadmniConstants::ORDER_STATUS_PENDING || !$orderTransactionDetails->transactionStatus == \App\Utils\QadmniConstants::TRANSACTION_STATUS_NONE) {
             $isOrderConfirmationValid = false;
             $this->response->body(\App\Utils\ResponseMessages::prepareError(117));
             return $isOrderConfirmationValid;
@@ -262,14 +260,9 @@ class OrderController extends AppController {
      * @param \App\Model\Table\PaymentsTable $paymentsTable
      */
     private function processCashTransaction($orderHeaderTable, $paymentsTable, $orderId, $transId) {
-        $statusUpdated = $orderHeaderTable->updateOrderAndTransactionStatus($orderId, 
-                \App\Utils\QadmniConstants::ORDER_STATUS_CONFIRMED, 
-                \App\Utils\QadmniConstants::TRANSACTION_STATUS_APPROVED);
+        $statusUpdated = $orderHeaderTable->updateOrderAndTransactionStatus($orderId, \App\Utils\QadmniConstants::ORDER_STATUS_CONFIRMED, \App\Utils\QadmniConstants::TRANSACTION_STATUS_APPROVED);
 
-        $paymentStatusUpdated = $paymentsTable->updateTransactionStatus($transId, 
-                \App\Utils\QadmniConstants::TRANSACTION_STATUS_APPROVED, 
-                \App\Utils\QadmniConstants::PAYMENT_METHOD_CASH_IN_STRING, 
-                \App\Utils\QadmniConstants::PAYMENT_METHOD_CASH);
+        $paymentStatusUpdated = $paymentsTable->updateTransactionStatus($transId, \App\Utils\QadmniConstants::TRANSACTION_STATUS_APPROVED, \App\Utils\QadmniConstants::PAYMENT_METHOD_CASH_IN_STRING, \App\Utils\QadmniConstants::PAYMENT_METHOD_CASH);
 
         return $statusUpdated && $paymentStatusUpdated;
     }
@@ -352,6 +345,30 @@ class OrderController extends AppController {
             }
         }
         return $producerId;
+    }
+
+    /**
+     * Call exchange API
+     * @param \App\Dto\ExchangeRateDto $dbExchangeRate
+     * @return \App\Dto\ExchangeRateDto
+     */
+    private function callExchangeApi($dbExchangeRate) {
+        $todaysExchangeRate = null;
+        try {
+            $dt = new \Cake\I18n\Date();
+            $dateDifference = date_diff($dt, $dbExchangeRate->dateUpdated);
+            $totalDaysDiff = $dateDifference->y * 365.25 + $dateDifference->m * 30 + $dateDifference->d + $dateDifference->h / 24 + $dateDifference->i / 60;
+            if ($totalDaysDiff > 2) {
+                $todaysExchangeRate = \App\Utils\ExchangeRateAPIFacade::getTodaysExchangeRate($dbExchangeRate->rate);
+                if (!isset($todaysExchangeRate->dateUpdated)) {
+                    $todaysExchangeRate = null;
+                }
+            }
+        } catch (\Exception $exc) {
+            echo $exc->getTraceAsString();
+        }
+
+        return $todaysExchangeRate;
     }
 
 }

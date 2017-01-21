@@ -96,5 +96,26 @@ class RateOfExchangeTable extends Table {
         
         return$exchangeRateDto;
     }
+    
+    /**
+     * Adds new exchange rate
+     * @param \App\Dto\ExchangeRateDto $exchangeRateData
+     * @return boolean 
+     */
+    public function addNewExchangeRate($exchangeRateData){
+        $dt = new \Cake\I18n\Date();
+        $formattedDate = $dt->format('d-m-Y');
+        
+        $dbExchangeRate = $this->getTable()->newEntity();
+        $dbExchangeRate->Rate = $exchangeRateData->rate;
+        $dbExchangeRate->ROEDate = $formattedDate;
+        $dbExchangeRate->UpdatedOn = new \Cake\I18n\Time();
+        
+        if($this->getTable()->save($dbExchangeRate)){
+            return true;
+        }
+        
+        return false;
+    }
 
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controller;
 
 use App\Controller\AppController;
@@ -8,16 +9,53 @@ use App\Controller\AppController;
  *
  * @property \App\Model\Table\OrderHeaderTable $OrderHeader
  */
-class OrderHeaderController extends AppController
-{
+class OrderHeaderController extends AppController {
+
+    public function getLiveOrderList() {
+        $this->apiInitialize();
+        
+        //Validate customer first
+        $isCustomerValidated = $this->validateCustomer();
+        if (!$isCustomerValidated) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(112));
+            return;
+        }
+
+        $liveOrderList = $this->OrderHeader->getLiveOrderList($this->postedCustomerData->customerId, $this->languageCode);
+        \App\Utils\DeliveryStatusProvider::provideStatus($liveOrderList);
+
+        if ($liveOrderList) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(213, $liveOrderList));
+        } else {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(118));
+        }
+    }
+
+    public function getPastOrderList() {
+        $this->apiInitialize();
+        //Validate customer first
+        $isCustomerValidated = $this->validateCustomer();
+        if (!$isCustomerValidated) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(112));
+            return;
+        }
+
+        $pastOrderList = $this->OrderHeader->getPastOrderList($this->postedCustomerData->customerId, $this->languageCode);
+        \App\Utils\DeliveryStatusProvider::providePastDeliveryStatus($pastOrderList);
+
+        if ($pastOrderList) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(214, $pastOrderList));
+        } else {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(119));
+        }
+    }
 
     /**
      * Index method
      *
      * @return \Cake\Network\Response|null
      */
-    public function index()
-    {
+    public function index() {
         $orderHeader = $this->paginate($this->OrderHeader);
 
         $this->set(compact('orderHeader'));
@@ -31,8 +69,7 @@ class OrderHeaderController extends AppController
      * @return \Cake\Network\Response|null
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
-    public function view($id = null)
-    {
+    public function view($id = null) {
         $orderHeader = $this->OrderHeader->get($id, [
             'contain' => []
         ]);
@@ -46,8 +83,7 @@ class OrderHeaderController extends AppController
      *
      * @return \Cake\Network\Response|void Redirects on successful add, renders view otherwise.
      */
-    public function add()
-    {
+    public function add() {
         $orderHeader = $this->OrderHeader->newEntity();
         if ($this->request->is('post')) {
             $orderHeader = $this->OrderHeader->patchEntity($orderHeader, $this->request->data);
@@ -70,8 +106,7 @@ class OrderHeaderController extends AppController
      * @return \Cake\Network\Response|void Redirects on successful edit, renders view otherwise.
      * @throws \Cake\Network\Exception\NotFoundException When record not found.
      */
-    public function edit($id = null)
-    {
+    public function edit($id = null) {
         $orderHeader = $this->OrderHeader->get($id, [
             'contain' => []
         ]);
@@ -96,8 +131,7 @@ class OrderHeaderController extends AppController
      * @return \Cake\Network\Response|null Redirects to index.
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
-    public function delete($id = null)
-    {
+    public function delete($id = null) {
         $this->request->allowMethod(['post', 'delete']);
         $orderHeader = $this->OrderHeader->get($id);
         if ($this->OrderHeader->delete($orderHeader)) {
@@ -108,4 +142,5 @@ class OrderHeaderController extends AppController
 
         return $this->redirect(['action' => 'index']);
     }
+
 }
