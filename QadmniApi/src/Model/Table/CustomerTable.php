@@ -164,4 +164,23 @@ class CustomerTable extends Table {
         
         return $customerExists;
     }
+    
+    /**
+     * Gets password details for a given email id
+     * @param type $customerEmailId
+     * @return \App\Dto\UserEmailPasswordDto
+     */
+    public function getPasswordDetails($customerEmailId){
+        $customerDetails = null;
+        $dbCustomer = $this->find()
+                ->where(['EmailId' => $customerEmailId])
+                ->select(['Name', 'Password'])
+                ->first();
+        if($dbCustomer){
+            $customerDetails = new \App\Dto\UserEmailPasswordDto();
+            $customerDetails->name = $dbCustomer->Name;
+            $customerDetails->password = $dbCustomer->Password;
+        }
+        return $customerDetails;
+    }
 }

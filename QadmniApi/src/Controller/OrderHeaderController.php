@@ -50,6 +50,23 @@ class OrderHeaderController extends AppController {
         }
     }
 
+    public function getVendorOrders(){
+        $this->apiInitialize();
+        $isProducerValidated = $this->validateProducer();
+        if(!$isProducerValidated){
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(104));
+            return;
+        }
+        
+        $vendorOrderList = $this->OrderHeader->getVendorOrderList();
+        \App\Utils\DeliveryStatusProvider::provideDeliveryStatusForVendorList($vendorOrderList);
+        if ($vendorOrderList) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(215, $vendorOrderList));
+        } else {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(120));
+        }
+    }
+
     /**
      * Index method
      *

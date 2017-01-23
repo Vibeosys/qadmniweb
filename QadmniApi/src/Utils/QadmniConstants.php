@@ -175,4 +175,16 @@ class QadmniConstants {
      * Exchange API call enabled? true or false
      */
     const IS_EXCHANGE_API_CALL_ENABLED = false;
+    /**
+     * From Email id to be used for Forgot password
+     */
+    const FROM_EMAIL_ID = 'fouz.sevgili@gmail.com';
+    /**
+     * Support team name for Qadmni
+     */
+    const SUPPORT_TEAM_NAME = 'Qadmni Support Team';
+    /**
+     * Forgot password subject
+     */
+    const FORGOT_PASSWORD_SUBJECT = 'Qadmni forgot password';
 }

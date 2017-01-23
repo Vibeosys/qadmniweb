@@ -333,5 +333,61 @@ class OrderHeaderTable extends Table {
         }
         return $pastOrderListResponse;
     }
+    
+    public function getVendorOrderList($producerId, $langCode){
+        $vendorOrderList = null;
+        $this->belongsTo('customer', [
+            'foreignKey' => 'CustomerId',
+            'joinType' => 'INNER'
+        ]);
+        
+        $this->hasOne('payments', [
+            'foreignKey' => 'OrderId',
+            'conditions' => ['PaymentStatus' => \App\Utils\QadmniConstants::TRANSACTION_STATUS_APPROVED]
+        ]);
+           
+        $result = $this->find()
+                ->contain(['customer', 'payments'])
+                ->where(['Status' => \App\Utils\QadmniConstants::ORDER_STATUS_CONFIRMED,
+                    'TransactionStatus' => \App\Utils\QadmniConstants::TRANSACTION_STATUS_APPROVED,
+                    'DeliveredOn IS NULL'])
+                ->select(['OrderId', 
+                    'OrderDate', 
+                    'TotalAmount', 
+                    'PaymentMode', 
+                    'DeliveryMode', 
+                    'DeliveryStatusId', 
+                    'DeliveryAddress',
+                    'DeliveryLat',
+                    'DeliveryLong',
+                    'DeliveryDateTime',
+                    'payments.PaymentMethod',
+                    'customer.Name',
+                    'customer.Phone']);
+                //->all();
+        
+        $orderList = $result->toArray();
+        $orderRecordCounter = 0;
+        foreach ($orderList as $orderRecord){
+            $vendorOrderRecord = new \App\Dto\Responses\VendorOrderListResponseDto();
+            $vendorOrderRecord->customerName = $orderRecord->customer->Name;
+            $vendorOrderRecord->customerPhone = $orderRecord->customer->Phone;
+            $vendorOrderRecord->amountInSAR = $orderRecord->TotalAmount;
+            $vendorOrderRecord->deliveryAddress = $orderRecord->DeliveryAddress;
+            $vendorOrderRecord->deliveryLat = $orderRecord->DeliveryLat;
+            $vendorOrderRecord->deliveryLong = $orderRecord->DeliveryLong;
+            $vendorOrderRecord->deliveryMethod = $orderRecord->DeliveryMode;
+            $vendorOrderRecord->paymentMode = $orderRecord->PaymentMode;
+            $vendorOrderRecord->deliveryStatusId = $orderRecord->DeliveryStatusId;
+            $vendorOrderRecord->orderDate = $orderRecord->OrderDate;
+            $vendorOrderRecord->orderId = $orderRecord->OrderId;
+            $vendorOrderRecord->scheduleDate = $orderRecord->DeliveryDateTime;
+            $vendorOrderRecord->paymentMethod = $orderRecord->payment->PaymentMethod;
+            
+            $vendorOrderList[$orderRecordCounter++] = $vendorOrderRecord;
+        }
+        
+        return $vendorOrderList;
+    }
 
 }

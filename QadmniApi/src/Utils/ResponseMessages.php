@@ -58,7 +58,10 @@ class ResponseMessages {
         116 => "This transaction requires paypal id, please provide and proceed",
         117 => "Order status has to be pending and transaction status to be initiated",
         118 => "No live orders found, please order now",
-        119 => "You do not have any past orders, order now"
+        119 => "You do not have any past orders, order now",
+        120 => "Sorry, No orders found",
+        121 => "Sorry, we could not find your email id in our records",
+        122 => "Sorry, this email id is already registered with us"
     ];
     
     protected static $successDictionary = [
@@ -75,7 +78,10 @@ class ResponseMessages {
         211 => "Order is processed successfully, please confirm to proceed further",
         212 => "Yalla! your order is confirmed",
         213 => "LIVE order deliveries",
-        214 => "Past order deliveries"
+        214 => "Past order deliveries",
+        215 => "Deliveries for Producer",
+        216 => "Password has been sent on your registered email id",
+        217 => "Email Id does not exist, go ahead"
     ];
 
 }

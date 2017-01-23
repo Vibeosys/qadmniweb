@@ -11,6 +11,8 @@ use App\Controller\AppController;
  */
 class CustomerController extends AppController {
 
+    use \App\Utils\ForgotPasswordTrait;
+
     public function register() {
         $this->apiInitialize();
         $customerRegistrationRequest = \App\Dto\Requests\CustomerRegistrationRequestDto::Deserialize($this->postedData);
@@ -47,6 +49,33 @@ class CustomerController extends AppController {
             $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(207, $customerDetails));
         } else {
             $this->response->body(\App\Utils\ResponseMessages::prepareError(109));
+        }
+    }
+
+    public function forgotPassword() {
+        $this->apiInitialize();
+        $forgotPasswordRequest = \App\Dto\Requests\ForgotPasswordRequestDto::Deserialize($this->postedData);
+        $customerDetails = $this->Customer->getPasswordDetails($forgotPasswordRequest->emailId);
+
+        $emailSent = false;
+
+        if ($customerDetails) {
+            try {
+                $emailSent = $this->sendForgotPasswordEmail($forgotPasswordRequest->emailId, 
+                        $customerDetails->name, $customerDetails->password);
+            } catch (\Exception $ex) {
+                $emailSent = false;
+                \Cake\Log\Log::error($ex->getTraceAsString());                
+            }
+        } else {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(121));
+            return;
+        }
+        //If email is sent then go ahead
+        if ($emailSent) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareSuccessMessage(216));
+        } else {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(114));
         }
     }
 

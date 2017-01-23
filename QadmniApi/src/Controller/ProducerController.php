@@ -11,6 +11,8 @@ use App\Controller\AppController;
  */
 class ProducerController extends AppController {
 
+    use \App\Utils\ForgotPasswordTrait;
+
     public function signUp() {
         $this->apiInitialize();
         $producerSignupRequest = \App\Dto\Requests\ProducerSignupRequestDto::Deserialize($this->postedData);
@@ -45,6 +47,45 @@ class ProducerController extends AppController {
         }
 
         $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(204, $producerDetails));
+    }
+
+    public function forgotPassword() {
+        $this->apiInitialize();
+        $forgotPasswordRequest = \App\Dto\Requests\ForgotPasswordRequestDto::Deserialize($this->postedData);
+        $producerDetails = $this->Producer->getPasswordDetails($forgotPasswordRequest->emailId);
+
+        $emailSent = false;
+
+        if ($producerDetails) {
+            try {
+                $emailSent = $this->sendForgotPasswordEmail($forgotPasswordRequest->emailId, $producerDetails->name, $producerDetails->password);
+            } catch (\Exception $ex) {
+                $emailSent = false;
+                Cake\Log\Log::error($ex->getTraceAsString());
+            }
+        } else {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(121));
+            return;
+        }
+        //If email is sent then go ahead
+        if ($emailSent) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareSuccessMessage(216));
+        } else {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(114));
+        }
+    }
+
+    public function checkEmailExists() {
+        $this->apiInitialize();
+        $vendorEmailVerificationRequest = \App\Dto\Requests\VendorEmailVerificationRequest::Deserialize($this->postedData);
+        $producerDetails = $this->Producer->getPasswordDetails($vendorEmailVerificationRequest->emailId);
+
+        $this->Producer->getPasswordDetails($vendorEmailVerificationRequest->emailId);
+        if ($producerDetails) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(122));
+        } else {
+            $this->response->body(\App\Utils\ResponseMessages::prepareSuccessMessage(217));
+        }
     }
 
     /**

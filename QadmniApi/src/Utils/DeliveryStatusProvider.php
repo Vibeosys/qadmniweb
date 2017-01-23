@@ -79,4 +79,63 @@ class DeliveryStatusProvider {
         }
     }
 
+    /**
+     * Provides status and stage for the deliveries
+     * @param \App\Dto\Responses\VendorOrderListResponseDto $orderList
+     */
+    public static function provideDeliveryStatusForVendorList($orderList) {
+        $deliveryInitiatedList = array(
+            QadmniConstants::DELIVERY_STATUS_INITIATED,
+            QadmniConstants::DELIVERY_STATUS_REQUESTED
+        );
+        $deliveryInProcess = QadmniConstants::DELIVERY_STATUS_IN_PROCESS;
+        $pickupInitiated = QadmniConstants::DELIVERY_STATUS_PICKUP_REQUESTED;
+        foreach ($orderList as $order) {
+            $sanitizedPaymentMethod = str_replace('_', ' ', $order->paymentMethod);
+            $paymentMethod = ucfirst($sanitizedPaymentMethod);
+            $order->paymentMethod = $paymentMethod;
+            
+            $order->canUpdateStatus = false;
+
+            //For home delivery
+            if ($order->deliveryMethod == QadmniConstants::DELIVERY_METHOD_HOME_DELIVERY) {
+                $order->deliveryType = 'HOME_DELIVERY';
+                if (in_array($order->deliveryStatusId, $deliveryInitiatedList)) {
+                    $order->currentStatusCode = 'ORDER_PLACED_CODE';
+                    $order->stageNo = 1;
+                } else if ($order->deliveryStatusId == $deliveryInProcess) {
+                    $order->currentStatusCode = 'DELIVERY_IN_PROGRESS';
+                    $order->stageNo = 2;
+                } else if ($order->deliveryStatusId == QadmniConstants::DELIVERY_STATUS_DELIVERED) {
+                    $order->stageNo = 3;
+                    $order->currentStatusCode = 'DELIVERED';
+                }
+            }
+            
+            //For pickup
+            if ($order->deliveryMethod == QadmniConstants::DELIVERY_METHOD_PICKUP) {
+                $order->deliveryType = 'PICKUP';
+                if (in_array($order->deliveryStatusId, $deliveryInitiatedList)) {
+                    $order->canUpdateStatus = true;
+                    $order->updatableStatusCodes = ['READY_TO_PICKUP',
+                        'PICKUP_COMPLETE', 'TIME_FOR_PICKUP_OVER'];
+                    $order->currentStatusCode = 'ORDER_PLACED_CODE';
+                    $order->stageNo = 1;
+                }
+                if ($order->deliveryStatusId == $pickupInitiated) {
+                    $order->canUpdateStatus = true;
+                    $order->updatableStatusCodes = ['PICKUP_COMPLETE', 'TIME_FOR_PICKUP_OVER'];
+                    $order->currentStatusCode = 'READY_TO_PICKUP';
+                    $order->stageNo = 2;
+                } else if ($order->deliveryStatusId == QadmniConstants::DELIVERY_STATUS_PICKUP_COMPLETE) {
+                    $order->currentStatusCode = 'PICKUP_COMPLETE';
+                    $order->stageNo = 3;
+                } else if ($order->deliveryStatusId == QadmniConstants::DELIVERY_STATUS_NOT_PICKED_UP) {
+                    $order->currentStatusCode = 'TIME_FOR_PICKUP_OVER';
+                    $order->stageNo = 3;
+                }
+            }
+        }
+    }
+
 }

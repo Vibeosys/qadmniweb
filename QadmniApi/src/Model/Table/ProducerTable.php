@@ -191,4 +191,17 @@ class ProducerTable extends Table {
         return $producerDetails;
     }
 
+    public function getPasswordDetails($producerEmailId){
+        $producerDetails = null;
+        $dbCustomer = $this->find()
+                ->where(['EmailId' => $producerEmailId])
+                ->select(['Name', 'Password'])
+                ->first();
+        if($dbCustomer){
+            $producerDetails = new \App\Dto\UserEmailPasswordDto();
+            $producerDetails->name = $dbCustomer->Name;
+            $producerDetails->password = $dbCustomer->Password;
+        }
+        return $producerDetails;
+    }
 }

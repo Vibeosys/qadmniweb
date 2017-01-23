@@ -69,7 +69,10 @@ Router::scope('/', function (RouteBuilder $routes) {
     $routes->connect('confirmorder', ['controller' => 'Order', 'action' => 'confirmOrder']);
     $routes->connect('liveorderlist', ['controller' => 'OrderHeader', 'action' => 'getLiveOrderList']);
     $routes->connect('pastorderlist', ['controller' => 'OrderHeader', 'action' => 'getPastOrderList']);
-
+    $routes->connect('vendororders', ['controller' => 'OrderHeader', 'action' => 'getVendorOrders']);
+    $routes->connect('customerforgotpassword', ['controller' => 'Customer', 'action' => 'forgotPassword']);
+    $routes->connect('vendorforgotpassword', ['controller' => 'Producer', 'action' => 'forgotPassword']);
+    $routes->connect('isduplicateemail', ['controller' => 'Producer', 'action' => 'checkEmailExists']);
     /**
      * Connect catchall routes for all controllers.
      *
