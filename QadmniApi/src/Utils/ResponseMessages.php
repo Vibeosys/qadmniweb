@@ -66,7 +66,8 @@ class ResponseMessages {
         124 => "Sorry, product information could not be updated, please try again",
         125 => "Product could not be added to your favorite list, please try again",
         126 => "Product could not be removed from your favorites",
-        127 => "There are no favorite items, please add one now"
+        127 => "There are no favorite items, please add one now",
+        128 => "No details found for the requested product"
     ];
     
     protected static $successDictionary = [
@@ -91,7 +92,8 @@ class ResponseMessages {
         219 => "Product information updated successfully",
         220 => "Product added to your favorites",
         221 => "Product has been removed from your favorites",
-        222 => "List of favorite items"
+        222 => "List of favorite items",
+        223 => "Item details"
     ];
 
 }

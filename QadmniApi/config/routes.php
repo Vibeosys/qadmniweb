@@ -78,6 +78,7 @@ Router::scope('/', function (RouteBuilder $routes) {
     $routes->connect('addfavorite', ['controller' => 'CustomerFavorites', 'action' => 'addToFavorites']);
     $routes->connect('removefavorite', ['controller' => 'CustomerFavorites', 'action' => 'removeFromFavorites']);
     $routes->connect('myfavorites', ['controller' => 'ItemMaster', 'action' => 'customerFavorites']);
+    $routes->connect('itemdetails', ['controller' => 'ItemMaster', 'action' => 'getItemDetails']);
     /**
      * Connect catchall routes for all controllers.
      *

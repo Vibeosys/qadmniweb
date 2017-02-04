@@ -317,6 +317,43 @@ class ItemMasterTable extends Table {
     }
 
     /**
+     * Get product details of desired product id
+     * @param int $productId
+     * @return \App\Dto\Responses\ProductDetailsResponseDto
+     */
+    public function getProductDetails($productId) {
+        $dbProduct = $this->find()
+                ->where(['ItemId' => $productId])
+                ->select([ 'ItemId',
+                    'ItemName_En',
+                    'ItemName_Ar',
+                    'ItemDesc_En',
+                    'ItemDesc_Ar',
+                    'CategoryId',
+                    'UnitPrice',
+                    'OfferText',
+                    'ImageUrl',
+                    'IsActive'])
+                ->first();
+
+        if ($dbProduct) {
+            $productDetailResponse = new \App\Dto\Responses\ProductDetailsResponseDto();
+            $productDetailResponse->itemId = $dbProduct->ItemId;
+            $productDetailResponse->itemNameEn = $dbProduct->ItemName_En;
+            $productDetailResponse->itemNameAr = $dbProduct->ItemName_Ar;
+            $productDetailResponse->itemDescAr = $dbProduct->ItemDesc_Ar;
+            $productDetailResponse->itemDescEn = $dbProduct->ItemDesc_En;
+            $productDetailResponse->categoryId = $dbProduct->CategoryId;
+            $productDetailResponse->unitPrice = $dbProduct->UnitPrice;
+            $productDetailResponse->offerText = $dbProduct->OfferText;
+            $productDetailResponse->isActive = $dbProduct->IsActive;
+            $productDetailResponse->imageUrl = $dbProduct->ImageUrl;
+        }
+
+        return $productDetailResponse;
+    }
+
+    /**
      * Updates product information
      * @param \App\Dto\Requests\UpdateProductRequestDto $productUpdateRequest
      * @param int $producerId
@@ -347,7 +384,7 @@ class ItemMasterTable extends Table {
             $dbProduct->IsActive = $productUpdateRequest->isActive;
             $dbProduct->ProducerId = $producerId;
         }
-        
+
         if ($this->save($dbProduct)) {
             $updateSuccess = true;
         }
@@ -436,4 +473,5 @@ class ItemMasterTable extends Table {
 
         return $itemListResponse;
     }
+
 }

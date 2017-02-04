@@ -59,6 +59,26 @@ class ItemMasterController extends AppController {
             $this->response->body(\App\Utils\ResponseMessages::prepareError(110));
         }
     }
+    
+    public function getItemDetails(){
+        $this->apiInitialize();
+        //Is valid producer
+        $isVendorValidated = $this->validateProducer();
+        if (!$isVendorValidated) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(105));
+            return;
+        }
+        
+        $itemDetailsRequest = \App\Dto\Requests\ItemDetailsRequestDto::Deserialize($this->postedData);
+        
+        $itemDetails = $this->ItemMaster->getProductDetails($itemDetailsRequest->productId);
+        if($itemDetails){
+            $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(223, $itemDetails));
+        }
+        else{
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(128));
+        }
+    }
 
     public function updateProduct() {
         $this->apiInitialize();
