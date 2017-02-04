@@ -74,6 +74,10 @@ Router::scope('/', function (RouteBuilder $routes) {
     $routes->connect('vendorforgotpassword', ['controller' => 'Producer', 'action' => 'forgotPassword']);
     $routes->connect('isduplicateemail', ['controller' => 'Producer', 'action' => 'checkEmailExists']);
     $routes->connect('updatedeliverystatus', ['controller' => 'OrderHeader', 'action' => 'updateDeliveryStatus']);
+    $routes->connect('updateproduct', ['controller' => 'ItemMaster', 'action' => 'updateProduct']);
+    $routes->connect('addfavorite', ['controller' => 'CustomerFavorites', 'action' => 'addToFavorites']);
+    $routes->connect('removefavorite', ['controller' => 'CustomerFavorites', 'action' => 'removeFromFavorites']);
+    $routes->connect('myfavorites', ['controller' => 'ItemMaster', 'action' => 'customerFavorites']);
     /**
      * Connect catchall routes for all controllers.
      *
