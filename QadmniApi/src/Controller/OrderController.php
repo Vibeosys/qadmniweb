@@ -354,6 +354,13 @@ class OrderController extends AppController {
      */
     private function callExchangeApi($dbExchangeRate) {
         $todaysExchangeRate = null;
+
+        if ($dbExchangeRate == null) {
+            $dbExchangeRate = new \App\Dto\ExchangeRateDto();
+            $dbExchangeRate->dateUpdated = new \Cake\I18n\Time();
+            $dbExchangeRate->rate = 1;
+        }
+
         try {
             $dt = new \Cake\I18n\Date();
             $dateDifference = date_diff($dt, $dbExchangeRate->dateUpdated);
@@ -365,7 +372,7 @@ class OrderController extends AppController {
                 }
             }
         } catch (\Exception $exc) {
-            echo $exc->getTraceAsString();
+            \Cake\Log\Log::error($exc->getTraceAsString());
         }
 
         return $todaysExchangeRate;

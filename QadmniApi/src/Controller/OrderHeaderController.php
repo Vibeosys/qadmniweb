@@ -13,7 +13,7 @@ class OrderHeaderController extends AppController {
 
     public function getLiveOrderList() {
         $this->apiInitialize();
-        
+
         //Validate customer first
         $isCustomerValidated = $this->validateCustomer();
         if (!$isCustomerValidated) {
@@ -50,20 +50,44 @@ class OrderHeaderController extends AppController {
         }
     }
 
-    public function getVendorOrders(){
+    public function getVendorOrders() {
         $this->apiInitialize();
         $isProducerValidated = $this->validateProducer();
-        if(!$isProducerValidated){
+        if (!$isProducerValidated) {
             $this->response->body(\App\Utils\ResponseMessages::prepareError(104));
             return;
         }
-        
+
         $vendorOrderList = $this->OrderHeader->getVendorOrderList();
         \App\Utils\DeliveryStatusProvider::provideDeliveryStatusForVendorList($vendorOrderList);
         if ($vendorOrderList) {
             $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(215, $vendorOrderList));
         } else {
             $this->response->body(\App\Utils\ResponseMessages::prepareError(120));
+        }
+    }
+
+    public function updateDeliveryStatus() {
+        $this->apiInitialize();
+        $isProducerValidated = $this->validateProducer();
+        if (!$isProducerValidated) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(104));
+            return;
+        }
+
+        $isDelivered = false;
+        $orderStatusUpdateRequest = \App\Dto\Requests\OrderStatusUpdateRequestDto::Deserialize($this->postedData);
+        $completionDeliveryStatusList = \App\Utils\DeliveryStatusProvider::getDeliveredStatusList();
+        //update is delivered flag if the status update is one of them
+        if (in_array($orderStatusUpdateRequest->deliveryStatusId, $completionDeliveryStatusList)) {
+            $isDelivered = true;
+        }
+        $statusUpdated = $this->OrderHeader->updateDeliveryStatus
+                ($orderStatusUpdateRequest->orderId, $orderStatusUpdateRequest->deliveryStatusId, $isDelivered);
+        if ($statusUpdated) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(218));
+        } else {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(123));
         }
     }
 

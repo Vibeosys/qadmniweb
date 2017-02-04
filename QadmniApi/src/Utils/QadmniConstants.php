@@ -87,6 +87,7 @@ class QadmniConstants {
      * Order status confirmed as CONFIRMED 2
      */
     const ORDER_STATUS_CONFIRMED = 2;
+    
     /**
      * Delivery status non initiated 0
      */

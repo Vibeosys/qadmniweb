@@ -16,6 +16,18 @@ namespace App\Utils;
 class DeliveryStatusProvider {
 
     /**
+     * Delivery completion status id list
+     * @return array
+     */
+    public static function getDeliveredStatusList() {
+        return [
+            QadmniConstants::DELIVERY_STATUS_DELIVERED,
+            QadmniConstants::DELIVERY_STATUS_PICKUP_COMPLETE,
+            QadmniConstants::DELIVERY_STATUS_NOT_PICKED_UP
+        ];
+    }
+
+    /**
      * Modifies the status to be sent with each order
      * @param \App\Dto\Responses\LiveOrderResponseDto $liveOrderList
      */
@@ -94,7 +106,7 @@ class DeliveryStatusProvider {
             $sanitizedPaymentMethod = str_replace('_', ' ', $order->paymentMethod);
             $paymentMethod = ucfirst($sanitizedPaymentMethod);
             $order->paymentMethod = $paymentMethod;
-            
+
             $order->canUpdateStatus = false;
 
             //For home delivery
@@ -111,20 +123,28 @@ class DeliveryStatusProvider {
                     $order->currentStatusCode = 'DELIVERED';
                 }
             }
-            
+
             //For pickup
             if ($order->deliveryMethod == QadmniConstants::DELIVERY_METHOD_PICKUP) {
                 $order->deliveryType = 'PICKUP';
                 if (in_array($order->deliveryStatusId, $deliveryInitiatedList)) {
                     $order->canUpdateStatus = true;
-                    $order->updatableStatusCodes = ['READY_TO_PICKUP',
-                        'PICKUP_COMPLETE', 'TIME_FOR_PICKUP_OVER'];
+                    /* $order->updatableStatusCodes = ['READY_TO_PICKUP',
+                      'PICKUP_COMPLETE', 'TIME_FOR_PICKUP_OVER']; */
+                    $order->updatableStatusCodes = [
+                        new \App\Dto\UpdatableStatusCodeDto(QadmniConstants::DELIVERY_STATUS_PICKUP_REQUESTED, 'READY_TO_PICKUP'),
+                        new \App\Dto\UpdatableStatusCodeDto(QadmniConstants::DELIVERY_STATUS_PICKUP_COMPLETE, 'PICKUP_COMPLETE'),
+                        new \App\Dto\UpdatableStatusCodeDto(QadmniConstants::DELIVERY_STATUS_NOT_PICKED_UP, 'TIME_FOR_PICKUP_OVER')
+                    ];
                     $order->currentStatusCode = 'ORDER_PLACED_CODE';
                     $order->stageNo = 1;
                 }
                 if ($order->deliveryStatusId == $pickupInitiated) {
                     $order->canUpdateStatus = true;
-                    $order->updatableStatusCodes = ['PICKUP_COMPLETE', 'TIME_FOR_PICKUP_OVER'];
+                    $order->updatableStatusCodes = [
+                        new \App\Dto\UpdatableStatusCodeDto(QadmniConstants::DELIVERY_STATUS_PICKUP_COMPLETE, 'PICKUP_COMPLETE'),
+                        new \App\Dto\UpdatableStatusCodeDto(QadmniConstants::DELIVERY_STATUS_NOT_PICKED_UP, 'TIME_FOR_PICKUP_OVER')
+                    ];
                     $order->currentStatusCode = 'READY_TO_PICKUP';
                     $order->stageNo = 2;
                 } else if ($order->deliveryStatusId == QadmniConstants::DELIVERY_STATUS_PICKUP_COMPLETE) {

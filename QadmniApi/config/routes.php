@@ -73,6 +73,7 @@ Router::scope('/', function (RouteBuilder $routes) {
     $routes->connect('customerforgotpassword', ['controller' => 'Customer', 'action' => 'forgotPassword']);
     $routes->connect('vendorforgotpassword', ['controller' => 'Producer', 'action' => 'forgotPassword']);
     $routes->connect('isduplicateemail', ['controller' => 'Producer', 'action' => 'checkEmailExists']);
+    $routes->connect('updatedeliverystatus', ['controller' => 'OrderHeader', 'action' => 'updateDeliveryStatus']);
     /**
      * Connect catchall routes for all controllers.
      *

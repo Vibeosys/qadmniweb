@@ -292,6 +292,12 @@ class OrderHeaderTable extends Table {
         return $liveOrderResponseList;
     }
 
+    /**
+     * Get past order list
+     * @param int $customerId
+     * @param string $langCode
+     * @return \App\Dto\Responses\PastOrderListResponseDto
+     */
     public function getPastOrderList($customerId, $langCode) {
         $pastOrderListResponse = null;
         $this->belongsTo('producer', ['foreignKey' => 'producerId', 'joinType' => 'INNER']);
@@ -334,6 +340,12 @@ class OrderHeaderTable extends Table {
         return $pastOrderListResponse;
     }
     
+    /**
+     * Get order list for vendor with language
+     * @param int $producerId
+     * @param string $langCode
+     * @return \App\Dto\Responses\VendorOrderListResponseDto
+     */
     public function getVendorOrderList($producerId, $langCode){
         $vendorOrderList = null;
         $this->belongsTo('customer', [
@@ -390,4 +402,29 @@ class OrderHeaderTable extends Table {
         return $vendorOrderList;
     }
 
+    /**
+     * Updates delivery status for the order
+     * @param int $orderId
+     * @param int $statusId
+     * @param boolean $isDelivered
+     * @return boolean
+     */
+    public function updateDeliveryStatus($orderId, $statusId, $isDelivered){
+        $orderUpdated = false;
+        $dbOrder = $this->find()
+                ->where(['OrderId' => $orderId])
+                ->select(['OrderId', 'DeliveryStatusId', 'DeliveredOn'])
+                ->first();
+        
+        if($dbOrder){
+            $dbOrder->DeliveryStatusId = $statusId;
+            if($isDelivered){
+                $dbOrder->DeliveredOn = new \Cake\I18n\Time();
+            }
+            if($this->save($dbOrder)){
+                $orderUpdated = true;
+            }
+        }
+        return $orderUpdated;
+    }
 }

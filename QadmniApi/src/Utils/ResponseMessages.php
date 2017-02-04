@@ -61,7 +61,8 @@ class ResponseMessages {
         119 => "You do not have any past orders, order now",
         120 => "Sorry, No orders found",
         121 => "Sorry, we could not find your email id in our records",
-        122 => "Sorry, this email id is already registered with us"
+        122 => "Sorry, this email id is already registered with us",
+        123 => "Delivery status could not be updated, please try again later"
     ];
     
     protected static $successDictionary = [
@@ -81,7 +82,8 @@ class ResponseMessages {
         214 => "Past order deliveries",
         215 => "Deliveries for Producer",
         216 => "Password has been sent on your registered email id",
-        217 => "Email Id does not exist, go ahead"
+        217 => "Email Id does not exist, go ahead",
+        218 => "Order status updated successfully"
     ];
 
 }
