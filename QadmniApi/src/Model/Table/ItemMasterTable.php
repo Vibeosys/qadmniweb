@@ -34,7 +34,7 @@ class ItemMasterTable extends Table {
         $this->primaryKey('ItemId');
     }
 
-    private function getTable(){
+    private function getTable() {
         return \Cake\ORM\TableRegistry::get('item_master');
     }
 
@@ -286,6 +286,7 @@ class ItemMasterTable extends Table {
                 $productImageAddedOrUpdated = true;
             }
         }
+
         return $productImageAddedOrUpdated;
     }
 
@@ -315,4 +316,124 @@ class ItemMasterTable extends Table {
         return $itemDetails;
     }
 
+    /**
+     * Updates product information
+     * @param \App\Dto\Requests\UpdateProductRequestDto $productUpdateRequest
+     * @param int $producerId
+     * @return boolean 
+     */
+    public function updateProduct($productUpdateRequest, $producerId) {
+        $updateSuccess = false;
+        $dbProduct = $this->find()
+                ->where(['ItemId' => $productUpdateRequest->productId, 'ProducerId' => $producerId])
+                ->select([ 'ItemId',
+                    'ItemName_En',
+                    'ItemName_Ar',
+                    'ItemDesc_En',
+                    'ItemDesc_Ar',
+                    'CategoryId',
+                    'UnitPrice',
+                    'OfferText',
+                    'IsActive'])
+                ->first();
+        if ($dbProduct) {
+            $dbProduct->CategoryId = $productUpdateRequest->categoryId;
+            $dbProduct->ItemName_En = $productUpdateRequest->itemNameEn;
+            $dbProduct->ItemName_Ar = $productUpdateRequest->itemNameAr;
+            $dbProduct->ItemDesc_En = $productUpdateRequest->itemDescEn;
+            $dbProduct->ItemDesc_Ar = $productUpdateRequest->itemDescAr;
+            $dbProduct->UnitPrice = $productUpdateRequest->price;
+            $dbProduct->OfferText = $productUpdateRequest->offerText;
+            $dbProduct->IsActive = $productUpdateRequest->isActive;
+            $dbProduct->ProducerId = $producerId;
+        }
+        
+        if ($this->save($dbProduct)) {
+            $updateSuccess = true;
+        }
+        return $updateSuccess;
+    }
+
+    /**
+     * Gets customer favorite list of items
+     * @param string $langCode
+     * @param int $customerId
+     * @return \App\Dto\Responses\ItemListResponseDto
+     */
+    public function getCustomerFavoriteList($langCode, $customerId) {
+        $itemListResponse = null;
+        $itemList = null;
+
+        //Create name of the dynamic variables based on language code
+        $itemName = 'ItemName_' . $langCode;
+        $itemDesc = 'ItemDesc_' . $langCode;
+        $businessName = 'BusinessName_' . $langCode;
+        $producerBusinessName = 'producer.BusinessName_' . $langCode;
+
+        //Join with tables
+        $this->belongsTo('producer', [
+            'foreignKey' => 'ProducerId',
+            'joinType' => 'INNER'
+        ]);
+        $this->hasOne('customer_favorites', [
+            'foreignKey' => 'ItemId',
+            'joinType' => 'INNER'
+        ]);
+        $result = $this->find()
+                ->contain(['producer', 'customer_favorites'])
+                ->where(['ItemMaster.IsActive' => 1, 'customer_favorites.CustomerId' => $customerId])
+                ->select(['ItemId',
+                    $itemName,
+                    $itemDesc,
+                    'UnitPrice',
+                    'OfferText',
+                    'Rating',
+                    'Reviews',
+                    'ImageUrl',
+                    'producer.ProducerId',
+                    $producerBusinessName,
+                    'producer.Latitude',
+                    'producer.Longitude'])
+                ->all();
+
+        $resultArray = $result->toArray();
+
+        $recordCounter = 0;
+        $producerLocations = null;
+        $producerIdList = [];
+        $producerCounter = 0;
+
+        //Iterate through records
+        foreach ($resultArray as $itemRecord) {
+            $itemListRecord = new \App\Dto\ItemInfoDto();
+
+            $itemListRecord->itemId = $itemRecord->ItemId;
+            $itemListRecord->itemName = $itemRecord->$itemName;
+            $itemListRecord->itemDesc = $itemRecord->$itemDesc;
+            $itemListRecord->imageUrl = $itemRecord->ImageUrl;
+            $itemListRecord->offerText = $itemRecord->OfferText;
+            $itemListRecord->rating = $itemRecord->Rating;
+            $itemListRecord->producerId = $itemRecord->producer->ProducerId;
+            $itemListRecord->unitPrice = $itemRecord->UnitPrice;
+            $itemListRecord->reviews = $itemRecord->Reviews;
+
+            //Create a unique list of producer id with locations
+            if (!in_array($itemListRecord->producerId, $producerIdList)) {
+                $producerLocation = $this->buildProducerLocation($itemRecord, $businessName);
+                $producerIdList[$producerCounter] = $itemListRecord->producerId;
+                $producerLocations[$producerCounter] = $producerLocation;
+                $producerCounter++;
+            }
+
+            $itemList[$recordCounter++] = $itemListRecord;
+        }
+        //If there are recors fetched by query then assign the lists
+        if (count($resultArray) > 0) {
+            $itemListResponse = new \App\Dto\Responses\ItemListResponseDto();
+            $itemListResponse->itemInfoList = $itemList;
+            $itemListResponse->producerLocations = $producerLocations;
+        }
+
+        return $itemListResponse;
+    }
 }

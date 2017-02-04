@@ -62,7 +62,11 @@ class ResponseMessages {
         120 => "Sorry, No orders found",
         121 => "Sorry, we could not find your email id in our records",
         122 => "Sorry, this email id is already registered with us",
-        123 => "Delivery status could not be updated, please try again later"
+        123 => "Delivery status could not be updated, please try again later",
+        124 => "Sorry, product information could not be updated, please try again",
+        125 => "Product could not be added to your favorite list, please try again",
+        126 => "Product could not be removed from your favorites",
+        127 => "There are no favorite items, please add one now"
     ];
     
     protected static $successDictionary = [
@@ -83,7 +87,11 @@ class ResponseMessages {
         215 => "Deliveries for Producer",
         216 => "Password has been sent on your registered email id",
         217 => "Email Id does not exist, go ahead",
-        218 => "Order status updated successfully"
+        218 => "Order status updated successfully",
+        219 => "Product information updated successfully",
+        220 => "Product added to your favorites",
+        221 => "Product has been removed from your favorites",
+        222 => "List of favorite items"
     ];
 
 }

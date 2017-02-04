@@ -60,6 +60,26 @@ class ItemMasterController extends AppController {
         }
     }
 
+    public function updateProduct() {
+        $this->apiInitialize();
+        //Is valid producer
+        $isVendorValidated = $this->validateProducer();
+        if (!$isVendorValidated) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(105));
+            return;
+        }
+
+        $productAddRequest = \App\Dto\Requests\UpdateProductRequestDto::Deserialize($this->postedData);
+        //Add a product and get product id
+        $updateSuccess = $this->ItemMaster->updateProduct($productAddRequest, $this->postedProducerData->producerId);
+
+        if ($updateSuccess) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(219));
+        } else {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(124));
+        }
+    }
+
     public function addUpdateProductImage() {
         $this->apiInitialize();
         $webrootDir = $this->getWebrootDir();
@@ -78,7 +98,7 @@ class ItemMasterController extends AppController {
             $this->response->body(\App\Utils\ResponseMessages::prepareError(105));
             return;
         }
-        
+
         foreach ($uploadedData as $requestedData) {
             if (!is_array($requestedData)) {
                 continue;
@@ -100,97 +120,22 @@ class ItemMasterController extends AppController {
         return "http://" . $this->request->host() . $this->request->webroot;
     }
 
-    /**
-     * Index method
-     *
-     * @return \Cake\Network\Response|null
-     */
-    public function index() {
-        $itemMaster = $this->paginate($this->ItemMaster);
-
-        $this->set(compact('itemMaster'));
-        $this->set('_serialize', ['itemMaster']);
-    }
-
-    /**
-     * View method
-     *
-     * @param string|null $id Item Master id.
-     * @return \Cake\Network\Response|null
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
-    public function view($id = null) {
-        $itemMaster = $this->ItemMaster->get($id, [
-            'contain' => []
-        ]);
-
-        $this->set('itemMaster', $itemMaster);
-        $this->set('_serialize', ['itemMaster']);
-    }
-
-    /**
-     * Add method
-     *
-     * @return \Cake\Network\Response|void Redirects on successful add, renders view otherwise.
-     */
-    public function add() {
-        $itemMaster = $this->ItemMaster->newEntity();
-        if ($this->request->is('post')) {
-            $itemMaster = $this->ItemMaster->patchEntity($itemMaster, $this->request->data);
-            if ($this->ItemMaster->save($itemMaster)) {
-                $this->Flash->success(__('The item master has been saved.'));
-
-                return $this->redirect(['action' => 'index']);
-            } else {
-                $this->Flash->error(__('The item master could not be saved. Please, try again.'));
-            }
+    public function customerFavorites() {
+        $this->apiInitialize();
+        //Validate customer first
+        $isCustomerValidated = $this->validateCustomer();
+        if (!$isCustomerValidated) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(112));
+            return;
         }
-        $this->set(compact('itemMaster'));
-        $this->set('_serialize', ['itemMaster']);
-    }
 
-    /**
-     * Edit method
-     *
-     * @param string|null $id Item Master id.
-     * @return \Cake\Network\Response|void Redirects on successful edit, renders view otherwise.
-     * @throws \Cake\Network\Exception\NotFoundException When record not found.
-     */
-    public function edit($id = null) {
-        $itemMaster = $this->ItemMaster->get($id, [
-            'contain' => []
-        ]);
-        if ($this->request->is(['patch', 'post', 'put'])) {
-            $itemMaster = $this->ItemMaster->patchEntity($itemMaster, $this->request->data);
-            if ($this->ItemMaster->save($itemMaster)) {
-                $this->Flash->success(__('The item master has been saved.'));
+        $favoriteItemList = $this->ItemMaster->getCustomerFavoriteList($this->languageCode, $this->postedCustomerData->customerId);
 
-                return $this->redirect(['action' => 'index']);
-            } else {
-                $this->Flash->error(__('The item master could not be saved. Please, try again.'));
-            }
-        }
-        $this->set(compact('itemMaster'));
-        $this->set('_serialize', ['itemMaster']);
-    }
-
-    /**
-     * Delete method
-     *
-     * @param string|null $id Item Master id.
-     * @return \Cake\Network\Response|null Redirects to index.
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
-    public function delete($id = null) {
-        $this->request->allowMethod(['post', 'delete']);
-        $itemMaster = $this->ItemMaster->get($id);
-        if ($this->ItemMaster->delete($itemMaster)) {
-            $this->Flash->success(__('The item master has been deleted.'));
+        if ($favoriteItemList) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(222, $favoriteItemList));
         } else {
-            $this->Flash->error(__('The item master could not be deleted. Please, try again.'));
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(127));
         }
-
-        return $this->redirect(['action' => 'index']);
     }
 
 }

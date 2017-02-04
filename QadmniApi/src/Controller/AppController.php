@@ -24,7 +24,9 @@ use Cake\Event\Event;
  *
  * Add your application-wide methods in the class below, your controllers
  * will inherit them.
- *
+ * 
+ * @property \App\Dto\ProducerCredentialDetailsDto $postedProducerData 
+ * @property \App\Dto\CustomerCredentialDetailsDto $postedCustomerData 
  * @link http://book.cakephp.org/3.0/en/controllers.html#the-app-controller
  */
 class AppController extends Controller {
