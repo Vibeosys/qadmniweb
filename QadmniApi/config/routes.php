@@ -78,6 +78,8 @@ Router::scope('/', function (RouteBuilder $routes) {
     $routes->connect('addremovefavorite', ['controller' => 'CustomerFavorites', 'action' => 'addRemoveFavorites']);
     $routes->connect('myfavorites', ['controller' => 'ItemMaster', 'action' => 'customerFavorites']);
     $routes->connect('itemdetails', ['controller' => 'ItemMaster', 'action' => 'getItemDetails']);
+    $routes->connect('reviewitems', ['controller' => 'OrderDtl', 'action' => 'getOrderItemDetails']);
+    $routes->connect('submitfeedback', ['controller' => 'CustomerFeedbacks', 'action' => 'submitFeedback']);
     /**
      * Connect catchall routes for all controllers.
      *
