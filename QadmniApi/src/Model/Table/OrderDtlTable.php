@@ -82,7 +82,7 @@ class OrderDtlTable extends Table {
         $orderDtlEntities = [];
         $ordersSaved = null;
         $saved = false;
-        
+
         foreach ($itemPriceList as $orderItem) {
             $orderDtlEntity = $this->getTable()->newEntity();
             $orderDtlEntity->OrderId = $orderId;
@@ -95,11 +95,40 @@ class OrderDtlTable extends Table {
 
         if (count($orderDtlEntity) > 0) {
             $ordersSaved = $this->getTable()->saveMany($orderDtlEntities);
-            if($ordersSaved){
+            if ($ordersSaved) {
                 $saved = true;
             }
         }
         return $saved;
+    }
+
+    /**
+     * Lists order items for the requested orderid
+     * @param int $orderId
+     * @param string $langCode
+     * @return array
+     */
+    public function getOrderItemDetails($orderId, $langCode) {
+        $itemList = [];
+        $itemName = 'ItemName_' . $langCode;
+        $this->belongsTo('item_master', [
+            'foreignKey' => 'ItemId',
+            'joinType' => 'INNER'
+        ]);
+        $dbDetails = $this->find()
+                ->contain(['item_master'])
+                ->where(['OrderId' => $orderId])
+                ->select(['OrderDtlId', 'item_master.ItemId', 'item_master.'.$itemName])
+                ->all();
+
+        foreach ($dbDetails as $orderItem) {
+            $orderItemDetails = new \App\Dto\Responses\OrderItemDetailResponseDto();
+            $orderItemDetails->itemId = $orderItem->item_master->ItemId;
+            $orderItemDetails->itemName = $orderItem->item_master->$itemName;
+            array_push($itemList, $orderItemDetails);
+        }
+
+        return $itemList;
     }
 
 }

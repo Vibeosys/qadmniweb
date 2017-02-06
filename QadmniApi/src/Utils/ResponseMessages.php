@@ -67,7 +67,9 @@ class ResponseMessages {
         125 => "Last favorite operation was unsuccessful, please try again",
         126 => "Product could not be removed from your favorites",
         127 => "There are no favorite items, please add one now",
-        128 => "No details found for the requested product"
+        128 => "No details found for the requested product",
+        129 => "No products found for the requested order",
+        130 => "Sorry, could not submit the feedback, please try again"
     ];
     
     protected static $successDictionary = [
@@ -93,7 +95,9 @@ class ResponseMessages {
         220 => "Last favorite operation was successful",
         221 => "Product has been removed from your favorites",
         222 => "List of favorite items",
-        223 => "Item details"
+        223 => "Item details",
+        224 => "Product list for the provided order",
+        225 => "Feedback submitted successfully"
     ];
 
 }

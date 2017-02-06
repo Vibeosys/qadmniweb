@@ -474,4 +474,33 @@ class ItemMasterTable extends Table {
         return $itemListResponse;
     }
 
+    /**
+     * Updates item rating for individual item
+     * @param \App\Dto\ItemRatingReviewDto $itemRatings
+     * @return boolean 
+     */
+    public function updateItemRatings($itemRatings) {
+        $itemsUpdated = true;
+        //Find all items and update the reviews
+        foreach ($itemRatings as $itemRating) {
+            $dbItem = $this->getTable()->find()
+                    ->where(['ItemId' => $itemRating->itemId])
+                    ->select(['ItemId', 'Reviews', 'Rating'])
+                    ->first();
+
+            if ($dbItem) {
+                $dbItem->Reviews = $itemRating->totalReviews;
+                $dbItem->Rating = $itemRating->avgRating;
+
+                if ($this->getTable()->save($dbItem)) {
+                    $itemsUpdated &= true;
+                } else {
+                    $itemsUpdated &= false;
+                }
+            }
+        }
+
+        return $itemsUpdated;
+    }
+
 }
