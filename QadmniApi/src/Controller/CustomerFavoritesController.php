@@ -11,7 +11,7 @@ use App\Controller\AppController;
  */
 class CustomerFavoritesController extends AppController {
 
-    public function addToFavorites() {
+    public function addRemoveFavorites() {
         $this->apiInitialize();
         //Validate customer first
         $isCustomerValidated = $this->validateCustomer();
@@ -20,36 +20,23 @@ class CustomerFavoritesController extends AppController {
             return;
         }
 
-        $addFavRequest = \App\Dto\Requests\AddRemoveFavoriteRequestDto::Deserialize($this->postedData);
-        $isAdded = $this->CustomerFavorites->addToFavorite
-                ($this->postedCustomerData->customerId, $addFavRequest->productId);
-        if ($isAdded) {
+        $dataAddedRemvoved = false;
+        $addRemoveFavRequest = \App\Dto\Requests\AddRemoveFavoriteRequestDto::Deserialize($this->postedData);
+
+        //Depending on the favorite flag, take an action
+        if ($addRemoveFavRequest->favFlag == \App\Utils\QadmniConstants::FAVORITE_FLAG_ADD) {
+            $dataAddedRemvoved = $this->CustomerFavorites->addToFavorite
+                    ($this->postedCustomerData->customerId, $addRemoveFavRequest->productId);
+        } else if ($addRemoveFavRequest->favFlag == \App\Utils\QadmniConstants::FAVORITE_FLAG_REMOVE) {
+            $dataAddedRemvoved = $this->CustomerFavorites->removeFavorite
+                    ($this->postedCustomerData->customerId, $addRemoveFavRequest->productId);
+        }
+
+        if ($dataAddedRemvoved) {
             $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(220));
         } else {
             $this->response->body(\App\Utils\ResponseMessages::prepareError(125));
         }
     }
-
-    public function removeFromFavorites() {
-        $this->apiInitialize();
-        //Validate customer first
-        $isCustomerValidated = $this->validateCustomer();
-        if (!$isCustomerValidated) {
-            $this->response->body(\App\Utils\ResponseMessages::prepareError(112));
-            return;
-        }
-
-        $removeFavRequest = \App\Dto\Requests\AddRemoveFavoriteRequestDto::Deserialize($this->postedData);
-        $isRemoved = $this->CustomerFavorites->removeFavorite
-                ($this->postedCustomerData->customerId, $removeFavRequest->productId);
-
-        if ($isRemoved) {
-            $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(221));
-        } else {
-            $this->response->body(\App\Utils\ResponseMessages::prepareError(126));
-        }
-    }
-
-
 
 }

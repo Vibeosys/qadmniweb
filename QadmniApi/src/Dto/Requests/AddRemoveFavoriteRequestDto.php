@@ -16,4 +16,5 @@ namespace App\Dto\Requests;
 class AddRemoveFavoriteRequestDto extends \App\Dto\JsonDeserializer {
     //put your code here
     public $productId;
+    public $favFlag;
 }

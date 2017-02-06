@@ -64,7 +64,7 @@ class ResponseMessages {
         122 => "Sorry, this email id is already registered with us",
         123 => "Delivery status could not be updated, please try again later",
         124 => "Sorry, product information could not be updated, please try again",
-        125 => "Product could not be added to your favorite list, please try again",
+        125 => "Last favorite operation was unsuccessful, please try again",
         126 => "Product could not be removed from your favorites",
         127 => "There are no favorite items, please add one now",
         128 => "No details found for the requested product"
@@ -90,7 +90,7 @@ class ResponseMessages {
         217 => "Email Id does not exist, go ahead",
         218 => "Order status updated successfully",
         219 => "Product information updated successfully",
-        220 => "Product added to your favorites",
+        220 => "Last favorite operation was successful",
         221 => "Product has been removed from your favorites",
         222 => "List of favorite items",
         223 => "Item details"

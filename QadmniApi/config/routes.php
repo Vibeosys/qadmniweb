@@ -75,8 +75,7 @@ Router::scope('/', function (RouteBuilder $routes) {
     $routes->connect('isduplicateemail', ['controller' => 'Producer', 'action' => 'checkEmailExists']);
     $routes->connect('updatedeliverystatus', ['controller' => 'OrderHeader', 'action' => 'updateDeliveryStatus']);
     $routes->connect('updateproduct', ['controller' => 'ItemMaster', 'action' => 'updateProduct']);
-    $routes->connect('addfavorite', ['controller' => 'CustomerFavorites', 'action' => 'addToFavorites']);
-    $routes->connect('removefavorite', ['controller' => 'CustomerFavorites', 'action' => 'removeFromFavorites']);
+    $routes->connect('addremovefavorite', ['controller' => 'CustomerFavorites', 'action' => 'addRemoveFavorites']);
     $routes->connect('myfavorites', ['controller' => 'ItemMaster', 'action' => 'customerFavorites']);
     $routes->connect('itemdetails', ['controller' => 'ItemMaster', 'action' => 'getItemDetails']);
     /**
