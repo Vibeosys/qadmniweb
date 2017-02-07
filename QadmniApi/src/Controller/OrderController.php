@@ -39,7 +39,7 @@ class OrderController extends AppController {
         $producerId = $this->verifyItemProducer($ItemPriceList);
 
         //If producer is zero then throw an error
-        if ($producerId == 0) {
+        if ($producerId <= 0) {
             $this->response->body(\App\Utils\ResponseMessages::prepareError(113));
             return;
         }

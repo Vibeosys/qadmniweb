@@ -25,8 +25,7 @@ class OrderParamBuilder {
      * @param \App\Dto\OrderItemPriceDto $itemPriceList 
      * @return \App\Dto\OrderHdrParamsDto
      */
-    public static function BuildOrderHeaderParams($orderInitiationRequest, $orderChargeDetails, 
-            $deliveryDateTime, $customerId, $producerId, $itemPriceList, $roeRate) {
+    public static function BuildOrderHeaderParams($orderInitiationRequest, $orderChargeDetails, $deliveryDateTime, $customerId, $producerId, $itemPriceList, $roeRate) {
         $orderHdrParams = null;
         $orderHdrParams = new \App\Dto\OrderHdrParamsDto();
         $orderHdrParams->customerId = $customerId;
@@ -34,22 +33,22 @@ class OrderParamBuilder {
         $orderHdrParams->deliveryDateTime = $deliveryDateTime;
         $orderHdrParams->orderSubTotal = $orderChargeDetails->orderSubTotal;
         $orderHdrParams->totalAmountInSAR = $orderChargeDetails->orderTotalAmount;
-        $orderHdrParams->totalAmountInUSD = $orderChargeDetails->orderTotalAmount * $roeRate;                
+        $orderHdrParams->totalAmountInUSD = round($orderChargeDetails->orderTotalAmount * $roeRate, 2, PHP_ROUND_HALF_UP);
         $orderHdrParams->transStatus = QadmniConstants::TRANSACTION_STATUS_NONE;
         $orderHdrParams->orderStatus = QadmniConstants::ORDER_STATUS_INITIATED;
         $orderHdrParams->deliveryStatus = QadmniConstants::DELIVERY_STATUS_INITIATED;
         $transactionRequired = 0;
-        if($orderInitiationRequest->paymentMethod == QadmniConstants::PAYMENT_METHOD_PAYPAL){
+        if ($orderInitiationRequest->paymentMethod == QadmniConstants::PAYMENT_METHOD_PAYPAL) {
             $transactionRequired = 1;
         }
         $orderHdrParams->transRequired = $transactionRequired;
         $orderHdrParams->orderInitiationRequest = $orderInitiationRequest;
         $totalItemQty = 0;
-        foreach ($itemPriceList as $itemRecord){
+        foreach ($itemPriceList as $itemRecord) {
             $totalItemQty += $itemRecord->itemQty;
         }
         $orderHdrParams->orderQty = $totalItemQty;
-        
+
         return $orderHdrParams;
     }
 
