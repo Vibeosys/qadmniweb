@@ -25,5 +25,6 @@ class ItemInfoDto {
     public $imageUrl;
     public $reviews;
     public $producerId;
+    public $categoryId;
 
 }

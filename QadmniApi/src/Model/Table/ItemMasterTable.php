@@ -154,20 +154,25 @@ class ItemMasterTable extends Table {
         ]);
         $result = $this->find()
                 ->contain(['producer'])
-                ->where(['ItemMaster.IsActive' => 1, 'CategoryId' => $categoryId])
+                ->where(['ItemMaster.IsActive' => 1])
                 ->select(['ItemId',
-                    $itemName,
-                    $itemDesc,
-                    'UnitPrice',
-                    'OfferText',
-                    'Rating',
-                    'Reviews',
-                    'ImageUrl',
-                    'producer.ProducerId',
-                    $producerBusinessName,
-                    'producer.Latitude',
-                    'producer.Longitude'])
-                ->all();
+            $itemName,
+            $itemDesc,
+            'UnitPrice',
+            'OfferText',
+            'Rating',
+            'Reviews',
+            'ImageUrl',
+            'CategoryId',
+            'producer.ProducerId',
+            $producerBusinessName,
+            'producer.Latitude',
+            'producer.Longitude']);
+
+        if ($categoryId != 0) {
+            $result = $result->where(['CategoryId' => $categoryId]);
+        }
+        //->all();
 
         $resultArray = $result->toArray();
 
@@ -189,6 +194,7 @@ class ItemMasterTable extends Table {
             $itemListRecord->producerId = $itemRecord->producer->ProducerId;
             $itemListRecord->unitPrice = $itemRecord->UnitPrice;
             $itemListRecord->reviews = $itemRecord->Reviews;
+            $itemListRecord->categoryId = $itemRecord->CategoryId;
 
             //Create a unique list of producer id with locations
             if (!in_array($itemListRecord->producerId, $producerIdList)) {
