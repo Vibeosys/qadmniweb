@@ -32,6 +32,10 @@ class OrderDtlTable extends Table {
         $this->table('order_dtl');
         $this->displayField('OrderDtlId');
         $this->primaryKey('OrderDtlId');
+        $this->belongsTo('item_master', [
+            'foreignKey' => 'ItemId',
+            'joinType' => 'INNER'
+        ]);
     }
 
     public function getTable() {
@@ -111,20 +115,47 @@ class OrderDtlTable extends Table {
     public function getOrderItemDetails($orderId, $langCode) {
         $itemList = [];
         $itemName = 'ItemName_' . $langCode;
-        $this->belongsTo('item_master', [
-            'foreignKey' => 'ItemId',
-            'joinType' => 'INNER'
-        ]);
+
         $dbDetails = $this->find()
                 ->contain(['item_master'])
                 ->where(['OrderId' => $orderId])
-                ->select(['OrderDtlId', 'item_master.ItemId', 'item_master.'.$itemName])
+                ->select(['OrderDtlId', 'item_master.ItemId', 'item_master.' . $itemName])
                 ->all();
 
         foreach ($dbDetails as $orderItem) {
             $orderItemDetails = new \App\Dto\Responses\OrderItemDetailResponseDto();
             $orderItemDetails->itemId = $orderItem->item_master->ItemId;
             $orderItemDetails->itemName = $orderItem->item_master->$itemName;
+            array_push($itemList, $orderItemDetails);
+        }
+
+        return $itemList;
+    }
+
+    /**
+     * Gets the items for the order, endpoint for orderdetails
+     * @param int $orderId
+     * @param string $langCode
+     * @return \App\Dto\OrderItemDetailDto
+     */
+    public function getOrderItems($orderId, $langCode) {
+        $itemList = [];
+        $itemName = 'ItemName_' . $langCode;
+
+        $dbDetails = $this->getTable()->find()
+                ->contain(['item_master'])
+                ->where(['OrderId' => $orderId])
+                ->select(['OrderDtlId',
+                    'item_master.' . $itemName,
+                    'ItemQty',
+                    'ItemTotalPrice'])
+                ->all();
+
+        foreach ($dbDetails as $orderItem) {
+            $orderItemDetails = new \App\Dto\OrderItemDetailDto();
+            $orderItemDetails->name = $orderItem->item_master->$itemName;
+            $orderItemDetails->qty = $orderItem->ItemQty;
+            $orderItemDetails->price = $orderItem->ItemTotalPrice;
             array_push($itemList, $orderItemDetails);
         }
 

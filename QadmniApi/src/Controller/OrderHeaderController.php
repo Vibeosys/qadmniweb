@@ -91,97 +91,32 @@ class OrderHeaderController extends AppController {
         }
     }
 
-    /**
-     * Index method
-     *
-     * @return \Cake\Network\Response|null
-     */
-    public function index() {
-        $orderHeader = $this->paginate($this->OrderHeader);
+    public function getOrderItemList() {
+        $this->apiInitialize();
+        //Validate customer first
+        $isCustomerValidated = $this->validateCustomer();
+        if (!$isCustomerValidated) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(112));
+            return;
+        }
+        $orderItemDetailRequest = \App\Dto\Requests\OrderItemDetailsRequestDto::Deserialize($this->postedData);
 
-        $this->set(compact('orderHeader'));
-        $this->set('_serialize', ['orderHeader']);
-    }
-
-    /**
-     * View method
-     *
-     * @param string|null $id Order Header id.
-     * @return \Cake\Network\Response|null
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
-    public function view($id = null) {
-        $orderHeader = $this->OrderHeader->get($id, [
-            'contain' => []
-        ]);
-
-        $this->set('orderHeader', $orderHeader);
-        $this->set('_serialize', ['orderHeader']);
-    }
-
-    /**
-     * Add method
-     *
-     * @return \Cake\Network\Response|void Redirects on successful add, renders view otherwise.
-     */
-    public function add() {
-        $orderHeader = $this->OrderHeader->newEntity();
-        if ($this->request->is('post')) {
-            $orderHeader = $this->OrderHeader->patchEntity($orderHeader, $this->request->data);
-            if ($this->OrderHeader->save($orderHeader)) {
-                $this->Flash->success(__('The order header has been saved.'));
-
-                return $this->redirect(['action' => 'index']);
-            } else {
-                $this->Flash->error(__('The order header could not be saved. Please, try again.'));
+        //Call the order details
+        $orderDetailResponse = $this->OrderHeader->getOrderChargeDetails($orderItemDetailRequest->orderId);
+        if ($orderDetailResponse) {
+            $orderDetailTable = new \App\Model\Table\OrderDtlTable();
+            //Get the items for the order then proceed further
+            $orderDetails = $orderDetailTable->getOrderItems($orderItemDetailRequest->orderId, $this->languageCode);
+            if ($orderDetails) {
+                $orderDetailResponse->items = $orderDetails;
             }
         }
-        $this->set(compact('orderHeader'));
-        $this->set('_serialize', ['orderHeader']);
-    }
 
-    /**
-     * Edit method
-     *
-     * @param string|null $id Order Header id.
-     * @return \Cake\Network\Response|void Redirects on successful edit, renders view otherwise.
-     * @throws \Cake\Network\Exception\NotFoundException When record not found.
-     */
-    public function edit($id = null) {
-        $orderHeader = $this->OrderHeader->get($id, [
-            'contain' => []
-        ]);
-        if ($this->request->is(['patch', 'post', 'put'])) {
-            $orderHeader = $this->OrderHeader->patchEntity($orderHeader, $this->request->data);
-            if ($this->OrderHeader->save($orderHeader)) {
-                $this->Flash->success(__('The order header has been saved.'));
-
-                return $this->redirect(['action' => 'index']);
-            } else {
-                $this->Flash->error(__('The order header could not be saved. Please, try again.'));
-            }
-        }
-        $this->set(compact('orderHeader'));
-        $this->set('_serialize', ['orderHeader']);
-    }
-
-    /**
-     * Delete method
-     *
-     * @param string|null $id Order Header id.
-     * @return \Cake\Network\Response|null Redirects to index.
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
-    public function delete($id = null) {
-        $this->request->allowMethod(['post', 'delete']);
-        $orderHeader = $this->OrderHeader->get($id);
-        if ($this->OrderHeader->delete($orderHeader)) {
-            $this->Flash->success(__('The order header has been deleted.'));
+        if ($orderDetailResponse != null && $orderDetailResponse->items != null) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(223, $orderDetailResponse));
         } else {
-            $this->Flash->error(__('The order header could not be deleted. Please, try again.'));
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(131));
         }
-
-        return $this->redirect(['action' => 'index']);
     }
 
 }

@@ -80,6 +80,7 @@ Router::scope('/', function (RouteBuilder $routes) {
     $routes->connect('itemdetails', ['controller' => 'ItemMaster', 'action' => 'getItemDetails']);
     $routes->connect('reviewitems', ['controller' => 'OrderDtl', 'action' => 'getOrderItemDetails']);
     $routes->connect('submitfeedback', ['controller' => 'CustomerFeedbacks', 'action' => 'submitFeedback']);
+    $routes->connect('orderitemdetails', ['controller' => 'OrderHeader', 'action' => 'getOrderItemList']);
     /**
      * Connect catchall routes for all controllers.
      *

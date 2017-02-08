@@ -314,15 +314,15 @@ class OrderHeaderTable extends Table {
                     'DeliveryStatusId IN ' => $deliveryStatusExclusionList,
                     'DeliveredOn < date_sub(now(), interval 2 day)'])
                 ->select(['OrderId',
-                    'OrderDate',
-                    'TotalAmount',
-                    'PaymentMode',
-                    'DeliveryMode',
-                    'DeliveryStatusId',
-                    'producer.' . $businessName]);
-                //->all();
+            'OrderDate',
+            'TotalAmount',
+            'PaymentMode',
+            'DeliveryMode',
+            'DeliveryStatusId',
+            'producer.' . $businessName]);
+        //->all();
 
-        $pastOrderList  = $pastOrderResult->toArray();
+        $pastOrderList = $pastOrderResult->toArray();
         $recordCounter = 0;
 
         foreach ($pastOrderList as $pastOrderRecord) {
@@ -339,48 +339,48 @@ class OrderHeaderTable extends Table {
         }
         return $pastOrderListResponse;
     }
-    
+
     /**
      * Get order list for vendor with language
      * @param int $producerId
      * @param string $langCode
      * @return \App\Dto\Responses\VendorOrderListResponseDto
      */
-    public function getVendorOrderList($producerId, $langCode){
+    public function getVendorOrderList($producerId, $langCode) {
         $vendorOrderList = null;
         $this->belongsTo('customer', [
             'foreignKey' => 'CustomerId',
             'joinType' => 'INNER'
         ]);
-        
+
         $this->hasOne('payments', [
             'foreignKey' => 'OrderId',
             'conditions' => ['PaymentStatus' => \App\Utils\QadmniConstants::TRANSACTION_STATUS_APPROVED]
         ]);
-           
+
         $result = $this->find()
                 ->contain(['customer', 'payments'])
                 ->where(['Status' => \App\Utils\QadmniConstants::ORDER_STATUS_CONFIRMED,
                     'TransactionStatus' => \App\Utils\QadmniConstants::TRANSACTION_STATUS_APPROVED,
                     'DeliveredOn IS NULL'])
-                ->select(['OrderId', 
-                    'OrderDate', 
-                    'TotalAmount', 
-                    'PaymentMode', 
-                    'DeliveryMode', 
-                    'DeliveryStatusId', 
-                    'DeliveryAddress',
-                    'DeliveryLat',
-                    'DeliveryLong',
-                    'DeliveryDateTime',
-                    'payments.PaymentMethod',
-                    'customer.Name',
-                    'customer.Phone']);
-                //->all();
-        
+                ->select(['OrderId',
+            'OrderDate',
+            'TotalAmount',
+            'PaymentMode',
+            'DeliveryMode',
+            'DeliveryStatusId',
+            'DeliveryAddress',
+            'DeliveryLat',
+            'DeliveryLong',
+            'DeliveryDateTime',
+            'payments.PaymentMethod',
+            'customer.Name',
+            'customer.Phone']);
+        //->all();
+
         $orderList = $result->toArray();
         $orderRecordCounter = 0;
-        foreach ($orderList as $orderRecord){
+        foreach ($orderList as $orderRecord) {
             $vendorOrderRecord = new \App\Dto\Responses\VendorOrderListResponseDto();
             $vendorOrderRecord->customerName = $orderRecord->customer->Name;
             $vendorOrderRecord->customerPhone = $orderRecord->customer->Phone;
@@ -395,10 +395,10 @@ class OrderHeaderTable extends Table {
             $vendorOrderRecord->orderId = $orderRecord->OrderId;
             $vendorOrderRecord->scheduleDate = $orderRecord->DeliveryDateTime;
             $vendorOrderRecord->paymentMethod = $orderRecord->payment->PaymentMethod;
-            
+
             $vendorOrderList[$orderRecordCounter++] = $vendorOrderRecord;
         }
-        
+
         return $vendorOrderList;
     }
 
@@ -409,22 +409,48 @@ class OrderHeaderTable extends Table {
      * @param boolean $isDelivered
      * @return boolean
      */
-    public function updateDeliveryStatus($orderId, $statusId, $isDelivered){
+    public function updateDeliveryStatus($orderId, $statusId, $isDelivered) {
         $orderUpdated = false;
         $dbOrder = $this->find()
                 ->where(['OrderId' => $orderId])
                 ->select(['OrderId', 'DeliveryStatusId', 'DeliveredOn'])
                 ->first();
-        
-        if($dbOrder){
+
+        if ($dbOrder) {
             $dbOrder->DeliveryStatusId = $statusId;
-            if($isDelivered){
+            if ($isDelivered) {
                 $dbOrder->DeliveredOn = new \Cake\I18n\Time();
             }
-            if($this->save($dbOrder)){
+            if ($this->save($dbOrder)) {
                 $orderUpdated = true;
             }
         }
         return $orderUpdated;
     }
+
+    /**
+     * Gets the details of the requested order
+     * @param type $orderId
+     * @return \App\Dto\Responses\OrderDetailResponseDto
+     */
+    public function getOrderChargeDetails($orderId) {
+        $orderItemDetailResponse = null;
+        $dbOrderItem = $this->find()
+                ->where(['OrderHeader.OrderId' => $orderId])
+                ->select([ 'AmountSubTotal',
+                    'TotalAmount',
+                    'OrderDate'])
+                ->first();
+
+        if($dbOrderItem){
+            $orderItemDetailResponse = new \App\Dto\Responses\OrderDetailResponseDto();
+            $orderItemDetailResponse->orderId = $orderId;
+            $orderItemDetailResponse->orderDate = $dbOrderItem->OrderDate;
+            $orderItemDetailResponse->totalAmountInSAR = $dbOrderItem->TotalAmount;
+            $orderItemDetailResponse->totalTaxesAndSurcharges = $dbOrderItem->TotalAmount - $dbOrderItem->AmountSubTotal;
+        }
+        
+        return $orderItemDetailResponse;
+    }
+
 }
