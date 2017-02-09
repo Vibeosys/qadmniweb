@@ -238,4 +238,13 @@ class QadmniConstants {
      */
     const FAVORITE_FLAG_REMOVE = 0;
 
+    /**
+     * Pick.sa integration base URL
+     */
+    const PICK_BASE_URI = 'http://sandbox.pick.sa';
+    /**
+     * Pick API key
+     */
+    const PICK_API_KEY = 'aefdc968c373627408ffd71dbdbf64edef25974d0060aa1a';
+
 }

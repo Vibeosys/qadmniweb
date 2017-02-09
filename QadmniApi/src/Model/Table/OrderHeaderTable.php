@@ -232,7 +232,11 @@ class OrderHeaderTable extends Table {
         $dbRecord = $thisTable->find()
                 ->contain(['customer', 'producer'])
                 ->where(['OrderId' => $orderId])
-                ->select(['OrderId', 'producer.ProducerPushId', 'producer.ProducerOsVersionType', 'customer.PushId', 'customer.OsVersionType'])
+                ->select(['OrderId',
+                    'producer.ProducerPushId',
+                    'producer.ProducerOsVersionType',
+                    'customer.PushId',
+                    'customer.OsVersionType'])
                 ->first();
 
         if ($dbRecord) {
@@ -411,7 +415,7 @@ class OrderHeaderTable extends Table {
      */
     public function updateDeliveryStatus($orderId, $statusId, $isDelivered) {
         $orderUpdated = false;
-        $dbOrder = $this->find()
+        $dbOrder = $this->getTable()->find()
                 ->where(['OrderId' => $orderId])
                 ->select(['OrderId', 'DeliveryStatusId', 'DeliveredOn'])
                 ->first();
@@ -421,7 +425,7 @@ class OrderHeaderTable extends Table {
             if ($isDelivered) {
                 $dbOrder->DeliveredOn = new \Cake\I18n\Time();
             }
-            if ($this->save($dbOrder)) {
+            if ($this->getTable()->save($dbOrder)) {
                 $orderUpdated = true;
             }
         }
@@ -442,15 +446,93 @@ class OrderHeaderTable extends Table {
                     'OrderDate'])
                 ->first();
 
-        if($dbOrderItem){
+        if ($dbOrderItem) {
             $orderItemDetailResponse = new \App\Dto\Responses\OrderDetailResponseDto();
             $orderItemDetailResponse->orderId = $orderId;
             $orderItemDetailResponse->orderDate = $dbOrderItem->OrderDate;
             $orderItemDetailResponse->totalAmountInSAR = $dbOrderItem->TotalAmount;
             $orderItemDetailResponse->totalTaxesAndSurcharges = $dbOrderItem->TotalAmount - $dbOrderItem->AmountSubTotal;
         }
-        
+
         return $orderItemDetailResponse;
+    }
+
+    /**
+     * Get delivery details to post to Logistics partner
+     * @param type $orderId
+     * @return \App\DeliveryOrderData\PlaceDeliveryOrderRequestDto
+     */
+    public function getDeliveryDetails($orderId) {
+        $placeDeliveryOrderRequest = null;
+        $this->getTable()->belongsTo('customer', [
+            'foreignKey' => 'CustomerId',
+            'joinType' => 'INNER'
+        ]);
+        $this->getTable()->belongsTo('producer', [
+            'foreignKey' => 'producerId',
+            'joinType' => 'INNER'
+        ]);
+
+        $result = $this->getTable()->find()
+                ->contain(['customer', 'producer'])
+                ->where(['OrderId' => $orderId,
+                    'DeliveryMode' => \App\Utils\QadmniConstants::DELIVERY_METHOD_HOME_DELIVERY,
+                    'DeliveryStatusId' => \App\Utils\QadmniConstants::DELIVERY_STATUS_INITIATED])
+                ->select(['OrderId',
+                    'OrderDate',
+                    'TotalAmount',
+                    'PaymentMode',
+                    'DeliveryLat',
+                    'DeliveryLong',
+                    'DeliveryDateTime',
+                    'customer.Name',
+                    'customer.Phone',
+                    'producer.Latitude',
+                    'producer.Longitude'])
+                ->first();
+
+        if ($result) {
+            $placeDeliveryOrderRequest = new \App\Dto\DeliveryOrderData\PlaceDeliveryOrderRequestDto();
+            $placeDeliveryOrderRequest->customerLat = $result->DeliveryLat;
+            $placeDeliveryOrderRequest->customerLong = $result->DeliveryLong;
+            $placeDeliveryOrderRequest->customerName = $result->customer->Name;
+            $placeDeliveryOrderRequest->customerPhone = $result->customer->Phone;
+            $placeDeliveryOrderRequest->vendorLat = $result->producer->Latitude;
+            $placeDeliveryOrderRequest->vendorLong = $result->producer->Longitude;
+            $placeDeliveryOrderRequest->price = $result->TotalAmount;
+            $placeDeliveryOrderRequest->dropoffTime = $result->DeliveryDateTime;
+            $placeDeliveryOrderRequest->pickupTime = $result->DeliveryDateTime;
+            $placeDeliveryOrderRequest->paymentType = $result->PaymentMode;
+            $placeDeliveryOrderRequest->orderId = $orderId;
+        }
+
+        return $placeDeliveryOrderRequest;
+    }
+
+    /**
+     * Updates logistics information for the order
+     * @param int $orderId
+     * @param \App\Dto\DeliveryOrderData\PlaceDeliveryOrderResponseDto $placeOrderResponse
+     * @param int $deliveryStatusId
+     */
+    public function updateLogisticsInfo($orderId, $placeOrderResponse, $deliveryStatusId) {
+        $infoUpdated = false;
+        $dbOrderInfo = $this->getTable()->find()
+                ->where(['OrderId' => $orderId])
+                ->select(['OrderId', 'DeliveryProviderId', 'DeliveryRefNo', 'DeliveryStatusId'])
+                ->first();
+
+        if ($dbOrderInfo) {
+            $dbOrderInfo->DeliveryProviderId = $placeOrderResponse->deliveryProviderId;
+            $dbOrderInfo->DeliveryRefNo = $placeOrderResponse->deliveryRefNo;
+            $dbOrderInfo->DeliveryStatusId = $deliveryStatusId;
+            
+            if($this->getTable()->save($dbOrderInfo)){
+                $infoUpdated = true;
+            }
+        }
+        
+        return $infoUpdated;
     }
 
 }

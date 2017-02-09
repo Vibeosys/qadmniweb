@@ -162,6 +162,7 @@ class OrderController extends AppController {
         }
 
         $confirmOrderRequest = \App\Dto\Requests\ConfirmOrderRequestDto::Deserialize($this->postedData);
+        $orderHeaderTable = new \App\Model\Table\OrderHeaderTable();
         $paymentTable = new \App\Model\Table\PaymentsTable();
         $orderTransactionDetails = $paymentTable->getTransactionDetails($confirmOrderRequest->orderId, $confirmOrderRequest->transactionId);
         //If could not retrieve the record then throw user back
@@ -175,17 +176,33 @@ class OrderController extends AppController {
             return;
         }
         $isSuccess = false;
-        $orderHeaderTable = new \App\Model\Table\OrderHeaderTable();
+        //$orderHeaderTable = new \App\Model\Table\OrderHeaderTable();
 
         if ($orderTransactionDetails->transactionRequired) {
             $isSuccess = $this->processPaypalTransaction($confirmOrderRequest, $paymentTable, $orderHeaderTable);
         } else {
-            $isSuccess = $this->processCashTransaction($orderHeaderTable, $paymentTable, $confirmOrderRequest->orderId, $confirmOrderRequest->transactionId);
+            $isSuccess = $this->processCashTransaction($orderHeaderTable, $paymentTable, 
+                    $confirmOrderRequest->orderId, $confirmOrderRequest->transactionId);
         }
 
         //If above transactions are not successful then dont go ahead
         if (!$isSuccess) {
             return;
+        }
+
+        //Try searching for a record where delivery is home delivery and status is pending
+        $placeOrderRequest = $orderHeaderTable->getDeliveryDetails($confirmOrderRequest->orderId);
+        if ($placeOrderRequest != null) {
+            $deliveryProvider = \App\Utils\DeliveryLogisticsProvider::create();
+            //Try placing an order with third party vendor
+            $placeOrderResponse = $deliveryProvider->placeOrder($placeOrderRequest);
+            if ($placeOrderResponse != null) {
+                //Update logistics information
+                $orderUpdateSuccess = $orderHeaderTable->updateLogisticsInfo($confirmOrderRequest->orderId, $placeOrderResponse, \App\Utils\QadmniConstants::DELIVERY_STATUS_REQUESTED);
+                if (!$orderUpdateSuccess) {
+                    \Cake\Log\Log::error('Logistics info could not be updated');
+                }
+            }
         }
 
         $orderNotificationDetails = $orderHeaderTable->getProducerCustomerInfo($confirmOrderRequest->orderId);
