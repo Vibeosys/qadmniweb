@@ -26,6 +26,10 @@ use Cake\ORM\Entity;
  * @property int $DeliveryStatusId
  * @property float $TotalAmountInUSD
  * @property \Cake\I18n\Time $DeliveredOn 
+ * @property int $DeliveryProviderId 
+ * @property string $DeliveryRefNo 
+ * @property int $IsGiftWrap 
+ * @property string $GiftMessage 
  */
 class OrderHeader extends Entity
 {

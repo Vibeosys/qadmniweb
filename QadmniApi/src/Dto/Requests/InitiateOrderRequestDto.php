@@ -22,4 +22,6 @@ class InitiateOrderRequestDto extends \App\Dto\JsonDeserializer{
     public $deliveryMethod;
     public $deliverySchedule;
     public $paymentMethod;
+    public $isGift;
+    public $giftMessage;
 }

@@ -118,9 +118,9 @@ class OrderHeaderTable extends Table {
         $dbNewOrder->Status = $orderHdrParams->orderStatus;
         $dbNewOrder->TransactionRequired = $orderHdrParams->transRequired;
         $dbNewOrder->TransactionStatus = $orderHdrParams->transStatus;
-        if (!is_null($orderHdrParams->deliveryDateTime)) {
-            $dbNewOrder->DeliveryDateTime = $orderHdrParams->deliveryDateTime;
-        }
+        $dbNewOrder->IsGiftWrap = $orderHdrParams->isGift;
+        $dbNewOrder->GiftMessage = $orderHdrParams->giftMessage;
+        $dbNewOrder->DeliveryDateTime = $orderHdrParams->deliveryDateTime;
         $dbNewOrder->PaymentMode = $orderHdrParams->orderInitiationRequest->paymentMethod;
         $dbNewOrder->OrderQty = $orderHdrParams->orderQty;
         $dbNewOrder->TotalAmount = $orderHdrParams->totalAmountInSAR;
@@ -379,7 +379,9 @@ class OrderHeaderTable extends Table {
             'DeliveryDateTime',
             'payments.PaymentMethod',
             'customer.Name',
-            'customer.Phone']);
+            'customer.Phone',
+            'IsGiftWrap',
+            'GiftMessage']);
         //->all();
 
         $orderList = $result->toArray();
@@ -399,6 +401,8 @@ class OrderHeaderTable extends Table {
             $vendorOrderRecord->orderId = $orderRecord->OrderId;
             $vendorOrderRecord->scheduleDate = $orderRecord->DeliveryDateTime;
             $vendorOrderRecord->paymentMethod = $orderRecord->payment->PaymentMethod;
+            $vendorOrderRecord->isGiftWrap = $orderRecord->IsGiftWrap == 1 ? true : false;
+            $vendorOrderRecord->giftMessage = $orderRecord->GiftMessage;
 
             $vendorOrderList[$orderRecordCounter++] = $vendorOrderRecord;
         }
@@ -526,12 +530,12 @@ class OrderHeaderTable extends Table {
             $dbOrderInfo->DeliveryProviderId = $placeOrderResponse->deliveryProviderId;
             $dbOrderInfo->DeliveryRefNo = $placeOrderResponse->deliveryRefNo;
             $dbOrderInfo->DeliveryStatusId = $deliveryStatusId;
-            
-            if($this->getTable()->save($dbOrderInfo)){
+
+            if ($this->getTable()->save($dbOrderInfo)) {
                 $infoUpdated = true;
             }
         }
-        
+
         return $infoUpdated;
     }
 

@@ -29,4 +29,6 @@ class OrderHdrParamsDto {
     public $totalAmountInSAR;
     public $totalAmountInUSD;
     public $deliveryStatus;
+    public $isGift;
+    public $giftMessage;
 }

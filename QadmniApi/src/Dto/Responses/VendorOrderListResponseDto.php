@@ -33,4 +33,6 @@ class VendorOrderListResponseDto {
     public $deliveryStatusId;
     public $updatableStatusCodes;
     public $canUpdateStatus;
+    public $isGiftWrap;
+    public $giftMessage;
 }
