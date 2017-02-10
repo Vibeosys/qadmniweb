@@ -58,7 +58,7 @@ class OrderHeaderController extends AppController {
             return;
         }
 
-        $vendorOrderList = $this->OrderHeader->getVendorOrderList();
+        $vendorOrderList = $this->OrderHeader->getVendorOrderList($this->postedProducerData->producerId);
         \App\Utils\DeliveryStatusProvider::provideDeliveryStatusForVendorList($vendorOrderList);
         if ($vendorOrderList) {
             $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(215, $vendorOrderList));

@@ -347,10 +347,9 @@ class OrderHeaderTable extends Table {
     /**
      * Get order list for vendor with language
      * @param int $producerId
-     * @param string $langCode
      * @return \App\Dto\Responses\VendorOrderListResponseDto
      */
-    public function getVendorOrderList($producerId, $langCode) {
+    public function getVendorOrderList($producerId) {
         $vendorOrderList = null;
         $this->belongsTo('customer', [
             'foreignKey' => 'CustomerId',
@@ -366,7 +365,8 @@ class OrderHeaderTable extends Table {
                 ->contain(['customer', 'payments'])
                 ->where(['Status' => \App\Utils\QadmniConstants::ORDER_STATUS_CONFIRMED,
                     'TransactionStatus' => \App\Utils\QadmniConstants::TRANSACTION_STATUS_APPROVED,
-                    'DeliveredOn IS NULL'])
+                    'DeliveredOn IS NULL',
+                    'ProducerId' => $producerId])
                 ->select(['OrderId',
             'OrderDate',
             'TotalAmount',
