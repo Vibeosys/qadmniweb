@@ -51,8 +51,10 @@ class PickDeliveryFacade implements DeliveryInterface {
         $pickOrderPlaceRequest->pickup_addr = sprintf('%f,%f', $placeDeliveryOrderRequest->vendorLat, $placeDeliveryOrderRequest->vendorLong);
         $pickOrderPlaceRequest->dropoff_addr = sprintf('%f,%f', $placeDeliveryOrderRequest->customerLat, $placeDeliveryOrderRequest->customerLong);
         $pickOrderPlaceRequest->phone = sprintf("%d", $placeDeliveryOrderRequest->customerPhone);
-        $pickOrderPlaceRequest->pickup_time = $this->_formatDateTime($placeDeliveryOrderRequest->pickupTime);
-        $pickOrderPlaceRequest->dropoff_time = $this->_formatDateTime($placeDeliveryOrderRequest->dropoffTime);
+        $pickupTime = DateTimeUtil::convertToRiyadhTimezone($placeDeliveryOrderRequest->pickupTime);
+        $dropoffTime = DateTimeUtil::convertToRiyadhTimezone($placeDeliveryOrderRequest->dropoffTime);
+        $pickOrderPlaceRequest->pickup_time = $this->_formatDateTime($pickupTime);
+        $pickOrderPlaceRequest->dropoff_time = $this->_formatDateTime($dropoffTime);
         $pickOrderPlaceRequest->price = $placeDeliveryOrderRequest->price;
         $pickOrderPlaceRequest->items = 'food';
         $pickOrderPlaceRequest->service_type = 'on-demand';

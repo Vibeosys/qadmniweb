@@ -14,36 +14,43 @@ namespace App\Utils;
  * @author anand
  */
 class PaypalResponseReader {
-    
+
     /**
      * Reads paypal response from paypal and returns an object
      * @param string $paypalId
      * @return \App\Dto\PaypalTransactionDto
      */
-    public static function readPaypalResponse($paypalId){
+    public static function readPaypalResponse($paypalId) {
         $paypalResponse = new \App\Dto\PaypalTransactionDto();
         $paypalCaller = QadmniUtils::buildPaypalCaller();
 
         $credentials = new \PayPal\Auth\OAuthTokenCredential($paypalCaller->clientId, $paypalCaller->secretKey);
         $apiContext = new \PayPal\Rest\ApiContext($credentials);
         $paypalPayment = new \PayPal\Api\Payment();
-        $paymentInfo = $paypalPayment->get($paypalId, $apiContext);
-        $paymentState = $paymentInfo->getState();
+        $paymentInfo = null;
+        $paymentState = null;
+        try {
+            $paymentInfo = $paypalPayment->get($paypalId, $apiContext);
+            $paymentState = $paymentInfo->getState();
+            $payer = $paymentInfo->getPayer();
+            $paypalResponse->paymentMethod = $payer->getPaymentMethod();
 
-        $payer = $paymentInfo->getPayer();
-        $paypalResponse->paymentMethod = $payer->getPaymentMethod();
-        
-        $transactions = $paymentInfo->getTransactions();
-        foreach ($transactions as $paypalTransaction) {
-            $paypalResponse->qadmniTransId = $paypalTransaction->getInvoiceNumber();
+            $transactions = $paymentInfo->getTransactions();
+            foreach ($transactions as $paypalTransaction) {
+                $paypalResponse->qadmniTransId = $paypalTransaction->getInvoiceNumber();
+            }
+        } catch (\Exception $ex) {
+            \Cake\Log\Log::error('Error occurred while getting paypal id ' . $ex->getTraceAsString());
         }
+
         if ($paymentState == 'approved') {
             $paypalResponse->isApproved = true;
         } else {
             $paypalResponse->isApproved = false;
         }
         $paypalResponse->paypalId = $paypalId;
-        
+
         return $paypalResponse;
     }
+
 }

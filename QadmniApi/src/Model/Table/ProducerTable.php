@@ -158,27 +158,27 @@ class ProducerTable extends Table {
         }
         return false;
     }
-    
+
     /**
      * Check login and get required details of Producer
      * @param \App\Dto\Requests\ProducerLoginRequestDto $producerLoginRequest
      */
-    public function getDetails($producerLoginRequest){
+    public function getDetails($producerLoginRequest) {
         $producerDetails = NULL;
         $dbProducer = $this->find()
-                ->where(['EmailId' => $producerLoginRequest->emailId, 
+                ->where(['EmailId' => $producerLoginRequest->emailId,
                     'Password' => $producerLoginRequest->password])
                 ->select(['ProducerId',
-                    'BusinessName_En', 
-                    'BusinessName_Ar', 
-                    'Address', 
-                    'Latitude', 
-                    'Longitude', 
+                    'BusinessName_En',
+                    'BusinessName_Ar',
+                    'Address',
+                    'Latitude',
+                    'Longitude',
                     'Name'])
                 ->first();
-        
-        if($dbProducer){
-            $producerDetails= new \App\Dto\Responses\ProducerLoginResponseDto();
+
+        if ($dbProducer) {
+            $producerDetails = new \App\Dto\Responses\ProducerLoginResponseDto();
             $producerDetails->producerId = $dbProducer->ProducerId;
             $producerDetails->producerName = $dbProducer->Name;
             $producerDetails->businessNameEn = $dbProducer->BusinessName_En;
@@ -187,21 +187,46 @@ class ProducerTable extends Table {
             $producerDetails->businessLong = $dbProducer->Longitude;
             $producerDetails->businessAddress = $dbProducer->Address;
         }
-        
+
         return $producerDetails;
     }
 
-    public function getPasswordDetails($producerEmailId){
+    public function getPasswordDetails($producerEmailId) {
         $producerDetails = null;
         $dbCustomer = $this->find()
                 ->where(['EmailId' => $producerEmailId])
                 ->select(['Name', 'Password'])
                 ->first();
-        if($dbCustomer){
+        if ($dbCustomer) {
             $producerDetails = new \App\Dto\UserEmailPasswordDto();
             $producerDetails->name = $dbCustomer->Name;
             $producerDetails->password = $dbCustomer->Password;
         }
         return $producerDetails;
     }
+
+    /**
+     * Updates profile for the producer
+     * @param \App\Dto\Requests\ProducerProfileUpdateRequestDto $producerData
+     * @param int $producerId
+     * @return boolean 
+     */
+    public function updateProfile($producerData, $producerId) {
+        $profileUpdated = false;
+        $dbProducer = $this->find()
+                ->where(['ProducerId' => $producerId])
+                ->select(['Name', 'Password', 'EmailId', 'ProducerId'])
+                ->first();
+
+        if ($dbProducer) {
+            $dbProducer->Name = $producerData->name;
+            $dbProducer->EmailId = $producerData->emailId;
+            $dbProducer->Password = $producerData->password;
+            if ($this->save($dbProducer)) {
+                $profileUpdated = true;
+            }
+        }
+        return $profileUpdated;
+    }
+
 }

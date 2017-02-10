@@ -8,7 +8,7 @@ use Cake\ORM\Entity;
  *
  * @property int $CustomerId
  * @property string $Name
- * @property int $Phone
+ * @property string $Phone
  * @property string $Password
  * @property string $EmailId
  * @property \Cake\I18n\Time $CreatedDate

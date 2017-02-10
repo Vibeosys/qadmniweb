@@ -108,8 +108,8 @@ class CustomerTable extends Table {
 
     /**
      * Gets details of the requested customer login
-     * @param type $emailId
-     * @param type $password
+     * @param string $emailId
+     * @param string $password
      * @return \App\Dto\Responses\CustomerLoginResponseDto
      */
     public function getDetails($emailId, $password) {
@@ -167,7 +167,7 @@ class CustomerTable extends Table {
     
     /**
      * Gets password details for a given email id
-     * @param type $customerEmailId
+     * @param string $customerEmailId
      * @return \App\Dto\UserEmailPasswordDto
      */
     public function getPasswordDetails($customerEmailId){
@@ -182,5 +182,28 @@ class CustomerTable extends Table {
             $customerDetails->password = $dbCustomer->Password;
         }
         return $customerDetails;
+    }
+    
+    /**
+     * Updates profile for the customer
+     * @param \App\Dto\Requests\CustomerProfileUpdateRequestDto $customerData
+     * @param int $customerId
+     */
+    public function updateProfile($customerData, $customerId){
+        $customerInfoUpdated = false;
+        $dbCustomer = $this->find()
+                ->where(['CustomerId' => $customerId])
+                ->select(['Name', 'Password', 'CustomerId', 'Phone', 'EmailId'])
+                ->first();
+        if($dbCustomer){
+            $dbCustomer->Name = $customerData->name;
+            $dbCustomer->Phone = $customerData->phone;
+            $dbCustomer->EmailId = $customerData->emailId;
+            $dbCustomer->Password = $customerData->password;
+            if($this->save($dbCustomer)){
+                $customerInfoUpdated = true;
+            }
+        }
+        return $customerInfoUpdated;
     }
 }

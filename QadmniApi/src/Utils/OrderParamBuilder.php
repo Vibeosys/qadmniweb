@@ -39,8 +39,8 @@ class OrderParamBuilder {
             $orderHdrParams->deliveryDateTime = $deliveryDateTime;
         }
         $orderHdrParams->orderSubTotal = $orderChargeDetails->orderSubTotal;
-        $orderHdrParams->totalAmountInSAR = $orderChargeDetails->orderTotalAmount;
-        $orderHdrParams->totalAmountInUSD = round($orderChargeDetails->orderTotalAmount * $roeRate, 2, PHP_ROUND_HALF_UP);
+        $orderHdrParams->totalAmountInSAR = round($orderChargeDetails->orderTotalAmount, 2, PHP_ROUND_HALF_UP);
+        $orderHdrParams->totalAmountInUSD = round($orderHdrParams->totalAmountInSAR * $roeRate, 2, PHP_ROUND_HALF_UP);
         $orderHdrParams->transStatus = QadmniConstants::TRANSACTION_STATUS_NONE;
         $orderHdrParams->orderStatus = QadmniConstants::ORDER_STATUS_INITIATED;
         $orderHdrParams->deliveryStatus = QadmniConstants::DELIVERY_STATUS_INITIATED;

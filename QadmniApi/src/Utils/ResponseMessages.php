@@ -52,7 +52,7 @@ class ResponseMessages {
         110 => "Product could not be added at this moment, please try again",
         111 => "Image could not be uploaded, please try again later",
         112 => "You are not authorized for this request, please login and try again",
-        113 => "Cart cannot products from different merchants",
+        113 => "Cart cannot have products from different merchants",
         114 => "Sorry, error occurred while processing your request, please try again",
         115 => "Sorry, something went wrong, please try again with fresh order",
         116 => "This transaction requires paypal id, please provide and proceed",
@@ -70,7 +70,9 @@ class ResponseMessages {
         128 => "No details found for the requested product",
         129 => "No products found for the requested order",
         130 => "Sorry, could not submit the feedback, please try again",
-        131 => "No products found in the requested order"
+        131 => "No products found in the requested order",
+        132 => "Sorry, profile could not be updated, please try again",
+        133 => "Sorry, the transaction was denied, please try again with fresh order"
     ];
     
     protected static $successDictionary = [
@@ -99,6 +101,7 @@ class ResponseMessages {
         223 => "Item details",
         224 => "Product list for the provided order",
         225 => "Feedback submitted successfully",
+        226 => "Profile updated successfully"
     ];
 
 }

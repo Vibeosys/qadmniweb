@@ -49,11 +49,12 @@ class OrderController extends AppController {
         $chargeMasterTable = new \App\Model\Table\ChargeMasterTable();
         $orderChargeList = $chargeMasterTable->getAllCharges();
         //Call provider engine to provide detail breakup of charges to be levied
-        $orderChargeDetails = \App\Utils\OrderChargeProvider::provideApplicableCharges($totalOrderAmount, $orderChargeList, $orderInitiationRequest->deliveryMethod, $orderInitiationRequest->paymentMethod);
+        $orderChargeDetails = \App\Utils\OrderChargeProvider::provideApplicableCharges($totalOrderAmount, 
+                $orderChargeList, $orderInitiationRequest->deliveryMethod, $orderInitiationRequest->paymentMethod);
 
         //Set delivery date time
         $deliveryDateTime = null;
-        if (!is_null($orderInitiationRequest->deliverySchedule) || $orderInitiationRequest->deliverySchedule != '') {
+        if ($orderInitiationRequest->deliverySchedule != 0) {
             $deliveryDateTime = \App\Utils\QadmniUtils::convertFromTimestampToDate
                             ($orderInitiationRequest->deliverySchedule);
         }
@@ -65,7 +66,9 @@ class OrderController extends AppController {
             $successAdded = $roeTable->addNewExchangeRate($newExchangeRate);
         }
         //Build params and add to table entries
-        $orderHdrParams = \App\Utils\OrderParamBuilder::BuildOrderHeaderParams($orderInitiationRequest, $orderChargeDetails, $deliveryDateTime, $this->postedCustomerData->customerId, $producerId, $ItemPriceList, $roeRecord->rate);
+        $orderHdrParams = \App\Utils\OrderParamBuilder::BuildOrderHeaderParams($orderInitiationRequest, 
+                $orderChargeDetails, $deliveryDateTime, $this->postedCustomerData->customerId, $producerId, 
+                $ItemPriceList, $roeRecord->rate);
         $orderHeaderTable = new \App\Model\Table\OrderHeaderTable();
         $orderId = $orderHeaderTable->addNewOrder($orderHdrParams);
         //If order id is not generated, then throw error to customer
@@ -175,18 +178,19 @@ class OrderController extends AppController {
         if (!$isOrderConfirmationValid) {
             return;
         }
-        $isSuccess = false;
+        $isPaymentSuccessful = false;
         //$orderHeaderTable = new \App\Model\Table\OrderHeaderTable();
 
         if ($orderTransactionDetails->transactionRequired) {
-            $isSuccess = $this->processPaypalTransaction($confirmOrderRequest, $paymentTable, $orderHeaderTable);
+            $isPaymentSuccessful = $this->processPaypalTransaction($confirmOrderRequest, $paymentTable, $orderHeaderTable);
         } else {
-            $isSuccess = $this->processCashTransaction($orderHeaderTable, $paymentTable, 
+            $isPaymentSuccessful = $this->processCashTransaction($orderHeaderTable, $paymentTable, 
                     $confirmOrderRequest->orderId, $confirmOrderRequest->transactionId);
         }
 
         //If above transactions are not successful then dont go ahead
-        if (!$isSuccess) {
+        if (!$isPaymentSuccessful) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(133));
             return;
         }
 
@@ -302,7 +306,7 @@ class OrderController extends AppController {
             $transactionStatus = \App\Utils\QadmniConstants::TRANSACTION_STATUS_REJECTED;
         }
 
-        $transStatusUpdated = $paymentTable->updatePaypalStatus($paypalResponse->qadmniTransId, $paypalResponse->paypalId, $transactionStatus, $paypalResponse->paymentMethod, \App\Utils\QadmniConstants::PAYMENT_METHOD_PAYPAL);
+        $transStatusUpdated = $paymentTable->updatePaypalStatus($confirmOrderRequest->transactionId, $paypalResponse->paypalId, $transactionStatus, $paypalResponse->paymentMethod, \App\Utils\QadmniConstants::PAYMENT_METHOD_PAYPAL);
         $orderTransStatusUpdated = $orderHeaderTable->updateOrderTransactionStatus($confirmOrderRequest->orderId, $transactionStatus);
 
         if (!$paypalResponse->isApproved) {
