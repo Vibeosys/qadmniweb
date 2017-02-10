@@ -157,5 +157,49 @@ class DeliveryStatusProvider {
             }
         }
     }
+    
+    /**
+     * Updates tracking order
+     * @param \App\Dto\Responses\TrackOrderResponseDto $trackingOrderResponse
+     */
+    public static function provideTrackingStatus($trackingOrderResponse){
+        $deliveryInitiatedList = array(
+            QadmniConstants::DELIVERY_STATUS_INITIATED,
+            QadmniConstants::DELIVERY_STATUS_REQUESTED
+        );
+        $deliveryInProcess = QadmniConstants::DELIVERY_STATUS_IN_PROCESS;
+        $pickupInitiated = QadmniConstants::DELIVERY_STATUS_PICKUP_REQUESTED;
+        //For home delivery
+            if ($trackingOrderResponse->deliveryMode == QadmniConstants::DELIVERY_METHOD_HOME_DELIVERY) {
+                if (in_array($trackingOrderResponse->deliveryStatus, $deliveryInitiatedList)) {
+                    $trackingOrderResponse->currentStatusCode = 'ORDER_PLACED_CODE';
+                    $trackingOrderResponse->stageNo = 1;
+                } else if ($trackingOrderResponse->deliveryStatus == $deliveryInProcess) {
+                    $trackingOrderResponse->currentStatusCode = 'DELIVERY_IN_PROGRESS';
+                    $trackingOrderResponse->stageNo = 2;
+                } else if ($trackingOrderResponse->deliveryStatus == QadmniConstants::DELIVERY_STATUS_DELIVERED) {
+                    $trackingOrderResponse->stageNo = 3;
+                    $trackingOrderResponse->currentStatusCode = 'DELIVERED';
+                }
+            }
+
+            //For pickup
+            if ($trackingOrderResponse->deliveryMode == QadmniConstants::DELIVERY_METHOD_PICKUP) {
+                if (in_array($trackingOrderResponse->deliveryStatus, $deliveryInitiatedList)) {
+                    $trackingOrderResponse->currentStatusCode = 'ORDER_PLACED_CODE';
+                    $trackingOrderResponse->stageNo = 1;
+                }
+                if ($trackingOrderResponse->deliveryStatus == $pickupInitiated) {
+                    $trackingOrderResponse->currentStatusCode = 'READY_TO_PICKUP';
+                    $trackingOrderResponse->stageNo = 2;
+                } else if ($trackingOrderResponse->deliveryStatus == QadmniConstants::DELIVERY_STATUS_PICKUP_COMPLETE) {
+                    $trackingOrderResponse->currentStatusCode = 'PICKUP_COMPLETE';
+                    $trackingOrderResponse->stageNo = 3;
+                } else if ($trackingOrderResponse->deliveryStatus == QadmniConstants::DELIVERY_STATUS_NOT_PICKED_UP) {
+                    $trackingOrderResponse->currentStatusCode = 'TIME_FOR_PICKUP_OVER';
+                    $trackingOrderResponse->stageNo = 3;
+                }
+            }
+    }
 
 }

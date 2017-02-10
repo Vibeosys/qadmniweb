@@ -83,6 +83,7 @@ Router::scope('/', function (RouteBuilder $routes) {
     $routes->connect('orderitemdetails', ['controller' => 'OrderHeader', 'action' => 'getOrderItemList']);
     $routes->connect('updatecustomerprofile', ['controller' => 'Customer', 'action' => 'updateProfile']);
     $routes->connect('updateproducerprofile', ['controller' => 'Producer', 'action' => 'updateProfile']);
+    $routes->connect('trackorder', ['controller' => 'OrderHeader', 'action' => 'trackOrder']);
     /**
      * Connect catchall routes for all controllers.
      *

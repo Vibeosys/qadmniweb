@@ -72,7 +72,8 @@ class ResponseMessages {
         130 => "Sorry, could not submit the feedback, please try again",
         131 => "No products found in the requested order",
         132 => "Sorry, profile could not be updated, please try again",
-        133 => "Sorry, the transaction was denied, please try again with fresh order"
+        133 => "Sorry, the transaction was denied, please try again with fresh order",
+        134 => "Sorry, order details could not be found"
     ];
     
     protected static $successDictionary = [
@@ -101,7 +102,8 @@ class ResponseMessages {
         223 => "Item details",
         224 => "Product list for the provided order",
         225 => "Feedback submitted successfully",
-        226 => "Profile updated successfully"
+        226 => "Profile updated successfully",
+        227 => "Tracking order details"
     ];
 
 }

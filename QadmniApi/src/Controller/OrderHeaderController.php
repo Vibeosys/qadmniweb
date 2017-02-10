@@ -119,4 +119,24 @@ class OrderHeaderController extends AppController {
         }
     }
 
+    public function trackOrder() {
+        $this->apiInitialize();
+
+        //Validate customer first
+        $isCustomerValidated = $this->validateCustomer();
+        if (!$isCustomerValidated) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(112));
+            return;
+        }
+
+        $trackOrderRequest = \App\Dto\Requests\TrackOrderRequestDto::Deserialize($this->postedData);
+        $trackOrderResponse = $this->OrderHeader->getTrackingDetails($trackOrderRequest->orderId);
+        \App\Utils\DeliveryStatusProvider::provideTrackingStatus($trackOrderResponse);
+        if ($trackOrderResponse) {
+            $this->response->body(\App\Utils\ResponseMessages::prepareJsonSuccessMessage(227, $trackOrderResponse));
+        } else {
+            $this->response->body(\App\Utils\ResponseMessages::prepareError(134));
+        }
+    }
+
 }

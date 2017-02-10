@@ -539,4 +539,30 @@ class OrderHeaderTable extends Table {
         return $infoUpdated;
     }
 
+    public function getTrackingDetails($orderId) {
+        $trackOrderResponse = null;
+        $this->belongsTo('customer', [
+            'foreignKey' => 'CustomerId',
+            'joinType' => 'INNER'
+        ]);
+
+        $result = $this->find()
+                ->contain(['customer'])
+                ->where(['OrderId' => $orderId])
+                ->select(['OrderId',
+                    'DeliveryAddress',
+                    'DeliveryStatusId',
+                    'DeliveryMode'])
+                ->first();
+
+        if ($result) {
+            $trackOrderResponse = new \App\Dto\Responses\TrackOrderResponseDto();
+            $trackOrderResponse->deliveryAddress = $result->DeliveryAddress;
+            $trackOrderResponse->deliveryMode = $result->DeliveryMode;
+            $trackOrderResponse->deliveryStatus = $result->DeliveryStatusId;        
+            $trackOrderResponse->orderId = $orderId;
+        }
+        return $trackOrderResponse;
+    }
+
 }
