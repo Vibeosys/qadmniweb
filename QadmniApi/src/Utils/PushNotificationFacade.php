@@ -21,6 +21,7 @@ class PushNotificationFacade {
      */
     private static $_config = null;
     private $_android_options = [];
+    private $_ios_options = [];
 
     public function __construct() {
         if (static::$_config == null) {
@@ -28,13 +29,6 @@ class PushNotificationFacade {
             static::$_config->setApplicationId(QadmniConstants::ONESIGNAL_APP_ID);
             static::$_config->setApplicationAuthKey(QadmniConstants::ONESIGNAL_APP_AUTH_KEY);
         }
-    }
-
-    public function setContents($englishContent, $arabicContent) {
-        //$contentArray = [ 'contents' => ['en' => $englishContent, 'ar' => $arabicContent]];
-        //$this->_android_options['contents']  =['en' => $englishContent, 'ar' => $arabicContent];
-        //array_push($this->_android_options, $contentArray);
-        return $this;
     }
 
     public function sendAndroidNotifications() {
@@ -51,39 +45,56 @@ class PushNotificationFacade {
                 }
             }
         } catch (\Exception $ex) {
-            \Cake\Log\Log::error($ex);    
+            \Cake\Log\Log::error($ex);
         }
         $this->_android_options = [];
         return $notificationSent;
     }
 
     public function setTemplate($templateId) {
-        //$templateArray = ['template' => $templateId];        
         $this->_android_options['template_id'] = $templateId;
-        //array_push($this->_android_options, $templateArray);
+        $this->_ios_options['template_id'] = $templateId;
         return $this;
     }
 
-    public function setAndroidDevices(array $deviceList) {
-        //$devices = ['include_player_ids' => $deviceList];
+    public function setDevices(array $deviceList) {
         $this->_android_options['include_player_ids'] = $deviceList;
+        $this->_ios_options['include_player_ids'] = $deviceList;
         return $this;
     }
 
     private function getAndroidOptions() {
-        $defaultAndroidOptions = [
-            'headings' => ['en' => 'Qadmni updates', 'ar' => 'كعكة عيد الميلاد'],
-            'android_sound' => 'notification',
-            'android_visibility' => 1,
-        ];
         $this->_android_options['headings'] = ['en' => 'Qadmni updates', 'ar' => 'كعكة عيد الميلاد'];
         $this->_android_options['android_sound'] = 'notification';
         $this->_android_options['android_visibility'] = 1;
         return $this->_android_options;
     }
 
+    private function getIosOptions() {
+        $this->_ios_options['headings'] = ['en' => 'Qadmni updates', 'ar' => 'كعكة عيد الميلاد'];
+        $this->_ios_options['subtitle'] = ['en' => 'Qadmni updates', 'ar' => 'كعكة عيد الميلاد'];
+        $this->_ios_options['content_available'] = 1;
+        return $this->_ios_options;
+    }
+
     public function sendIOSNotifications() {
-        
+        $notificationSent = false;
+        $oneSignalApi = new \OneSignal\OneSignal(static::$_config);
+
+        $options = $this->getIosOptions();
+        try {
+            $addResult = $oneSignalApi->notifications->add($options);
+            if ($addResult) {
+                $resultOpen = $oneSignalApi->notifications->open($addResult['id']);
+                if ($resultOpen) {
+                    $notificationSent = $resultOpen['Success'];
+                }
+            }
+        } catch (\Exception $ex) {
+            \Cake\Log\Log::error($ex);
+        }
+        $this->_ios_options = [];
+        return $notificationSent;
     }
 
 }

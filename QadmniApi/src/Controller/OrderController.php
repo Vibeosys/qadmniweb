@@ -49,8 +49,7 @@ class OrderController extends AppController {
         $chargeMasterTable = new \App\Model\Table\ChargeMasterTable();
         $orderChargeList = $chargeMasterTable->getAllCharges();
         //Call provider engine to provide detail breakup of charges to be levied
-        $orderChargeDetails = \App\Utils\OrderChargeProvider::provideApplicableCharges($totalOrderAmount, 
-                $orderChargeList, $orderInitiationRequest->deliveryMethod, $orderInitiationRequest->paymentMethod);
+        $orderChargeDetails = \App\Utils\OrderChargeProvider::provideApplicableCharges($totalOrderAmount, $orderChargeList, $orderInitiationRequest->deliveryMethod, $orderInitiationRequest->paymentMethod);
 
         //Set delivery date time
         $deliveryDateTime = null;
@@ -66,9 +65,7 @@ class OrderController extends AppController {
             $successAdded = $roeTable->addNewExchangeRate($newExchangeRate);
         }
         //Build params and add to table entries
-        $orderHdrParams = \App\Utils\OrderParamBuilder::BuildOrderHeaderParams($orderInitiationRequest, 
-                $orderChargeDetails, $deliveryDateTime, $this->postedCustomerData->customerId, $producerId, 
-                $ItemPriceList, $roeRecord->rate);
+        $orderHdrParams = \App\Utils\OrderParamBuilder::BuildOrderHeaderParams($orderInitiationRequest, $orderChargeDetails, $deliveryDateTime, $this->postedCustomerData->customerId, $producerId, $ItemPriceList, $roeRecord->rate);
         $orderHeaderTable = new \App\Model\Table\OrderHeaderTable();
         $orderId = $orderHeaderTable->addNewOrder($orderHdrParams);
         //If order id is not generated, then throw error to customer
@@ -184,8 +181,7 @@ class OrderController extends AppController {
         if ($orderTransactionDetails->transactionRequired) {
             $isPaymentSuccessful = $this->processPaypalTransaction($confirmOrderRequest, $paymentTable, $orderHeaderTable);
         } else {
-            $isPaymentSuccessful = $this->processCashTransaction($orderHeaderTable, $paymentTable, 
-                    $confirmOrderRequest->orderId, $confirmOrderRequest->transactionId);
+            $isPaymentSuccessful = $this->processCashTransaction($orderHeaderTable, $paymentTable, $confirmOrderRequest->orderId, $confirmOrderRequest->transactionId);
         }
 
         //If above transactions are not successful then dont go ahead
@@ -256,22 +252,26 @@ class OrderController extends AppController {
     }
 
     private function sendConfirmationNotificationToCustomers($customerDeviceId, $platform) {
+        $notificationFacade = new \App\Utils\PushNotificationFacade();
+        $notificationFacade->setTemplate(\App\Utils\QadmniConstants::NOTIFICATION_ORDER_CONFIRMATION_TEMPLATE_ID)
+                ->setDevices([$customerDeviceId]);
+        //Choose the platform and send messages
         if ($platform == \App\Utils\QadmniConstants::ANDROID_OS_TYPE) {
-            //$englishContent = 'Thank you for placing your order with us. We will keep you updated about your order';
-            $notificationFacade = new \App\Utils\PushNotificationFacade();
-            $notificationSent = $notificationFacade->setTemplate(\App\Utils\QadmniConstants::NOTIFICATION_ORDER_CONFIRMATION_TEMPLATE_ID)
-                    ->setAndroidDevices([$customerDeviceId])
-                    ->sendAndroidNotifications();
+            $notificationSent = $notificationFacade->sendAndroidNotifications();
+        } else if ($platform == \App\Utils\QadmniConstants::IOS_OS_TYPE) {
+            $notificationSent = $notificationFacade->sendIOSNotifications();
         }
     }
 
     private function sendConfirmationNotificationToProducers($producerDeviceId, $platform) {
+        $notificationFacade = new \App\Utils\PushNotificationFacade();
+        $notificationFacade->setTemplate(\App\Utils\QadmniConstants::NOTIFICATION_ORDER_CONFIRMATION_PRODUCER_TEMPLATE_ID)
+                ->setDevices([$producerDeviceId]);
+        //Choose the platform
         if ($platform == \App\Utils\QadmniConstants::ANDROID_OS_TYPE) {
-            //$englishContent = 'Thank you for placing your order with us. We will keep you updated about your order';
-            $notificationFacade = new \App\Utils\PushNotificationFacade();
-            $notificationSent = $notificationFacade->setTemplate(\App\Utils\QadmniConstants::NOTIFICATION_ORDER_CONFIRMATION_PRODUCER_TEMPLATE_ID)
-                    ->setAndroidDevices([$producerDeviceId])
-                    ->sendAndroidNotifications();
+            $notificationSent = $notificationFacade->sendAndroidNotifications();
+        } else if ($platform == \App\Utils\QadmniConstants::IOS_OS_TYPE) {
+            $notificationSent = $notificationFacade->sendIOSNotifications();
         }
     }
 
